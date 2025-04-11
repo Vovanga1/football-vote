@@ -1,12 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Football Vote</title>
+  <meta charset="UTF-8">
+  <title>Голосование за футболиста</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      background: #f4f4f4;
+    }
+    h1 {
+      color: #333;
+    }
+    .player {
+      margin-bottom: 20px;
+    }
+    button {
+      margin-left: 10px;
+      padding: 5px 15px;
+    }
+  </style>
 </head>
 <body>
-    <h1>Добро пожаловать на сайт голосования!</h1>
-    <p>Здесь можно голосовать за футболистов.</p>
+  <h1>Кто лучший футболист?</h1>
+
+  <div class="player">
+    Месси — <span id="vote-messi">0</span> голосов
+    <button onclick="vote('messi')">Голосовать</button>
+  </div>
+
+  <div class="player">
+    Роналду — <span id="vote-ronaldo">0</span> голосов
+    <button onclick="vote('ronaldo')">Голосовать</button>
+  </div>
+
+  <script>
+    let votes = {
+      messi: 0,
+      ronaldo: 0
+    };
+
+    function vote(player) {
+      votes[player]++;
+      document.getElementById(`vote-${player}`).innerText = votes[player];
+    }
+  </script>
 </body>
 </html>
