@@ -24,7 +24,7 @@
             text-align: center;
         }
         .player:hover {
-            border-color: #007bff;
+            border-color: #00FF00;
         }
         .buttons {
             text-align: center;
@@ -46,7 +46,7 @@
             text-align: left;
         }
         th {
-            background-color: #f2f2f2;
+            background-color: #006400;
         }
     </style>
 </head>
@@ -83,19 +83,35 @@
 
         // Функция для получения случайной пары
         function getRandomPair() {
-            const availablePlayers = players.filter(p => 
-                !usedPairs[`${currentPair?.a}-${p.id}`] && 
-                !usedPairs[`${p.id}-${currentPair?.a}`] &&
-                p.id !== currentPair?.a
-            );
-
-            if (availablePlayers.length < 1) {
+            // Создаем копию массива игроков
+            const availablePlayers = [...players];
+            
+            // Если все возможные пары были использованы
+            if (Object.keys(usedPairs).length >= players.length * (players.length - 1) / 2) {
                 alert('Все возможные пары были показаны!');
                 return;
             }
 
-            const a = currentPair ? currentPair.a : players[Math.floor(Math.random() * players.length)].id;
-            const b = availablePlayers[Math.floor(Math.random() * availablePlayers.length)].id;
+            // Выбираем случайного первого игрока
+            const aIndex = Math.floor(Math.random() * availablePlayers.length);
+            const a = availablePlayers[aIndex].id;
+            availablePlayers.splice(aIndex, 1); // Удаляем его из доступных
+            
+            // Фильтруем оставшихся игроков, чтобы не было повторных пар
+            const availableForB = availablePlayers.filter(p => 
+                !usedPairs[`${a}-${p.id}`] && 
+                !usedPairs[`${p.id}-${a}`]
+            );
+
+            if (availableForB.length === 0) {
+                // Если для этого игрока A нет доступных пар, пробуем снова
+                getRandomPair();
+                return;
+            }
+
+            // Выбираем случайного второго игрока
+            const bIndex = Math.floor(Math.random() * availableForB.length);
+            const b = availableForB[bIndex].id;
             
             currentPair = { a, b };
             usedPairs[`${a}-${b}`] = true;
