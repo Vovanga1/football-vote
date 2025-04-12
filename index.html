@@ -1,49 +1,152 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Голосование за футболиста</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 30px;
-      background: #f4f4f4;
-    }
-    h1 {
-      color: #333;
-    }
-    .player {
-      margin-bottom: 20px;
-    }
-    button {
-      margin-left: 10px;
-      padding: 5px 15px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Голосование за лучшего футболиста</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .players {
+            display: flex;
+            justify-content: space-around;
+            margin: 40px 0;
+        }
+        .player {
+            border: 2px solid #ccc;
+            padding: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+            text-align: center;
+        }
+        .player:hover {
+            border-color: #007bff;
+        }
+        .buttons {
+            text-align: center;
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            cursor: pointer;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
 </head>
 <body>
-  <h1>Кто лучший футболист?</h1>
+    <h1>Кто лучший футболист?</h1>
+    <div class="players">
+        <div class="player" id="player1" onclick="vote(1)"></div>
+        <div class="player" id="player2" onclick="vote(2)"></div>
+    </div>
+    <div class="buttons">
+        <button onclick="vote(0)">Ничья</button>
+    </div>
+    <h2>Таблица результатов</h2>
+    <table id="results">
+        <thead>
+            <tr>
+                <th>Игрок</th>
+                <th>Очки</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
 
-  <div class="player">
-    Месси — <span id="vote-messi">0</span> голосов
-    <button onclick="vote('messi')">Голосовать</button>
-  </div>
+    <script>
+        // Инициализация данных
+        let players = JSON.parse(localStorage.getItem('players')) || Array.from({length: 200}, (_, i) => ({
+            id: i + 1,
+            name: `Футболист ${i + 1}`,
+            score: 0
+        }));
 
-  <div class="player">
-    Роналду — <span id="vote-ronaldo">0</span> голосов
-    <button onclick="vote('ronaldo')">Голосовать</button>
-  </div>
+        let usedPairs = JSON.parse(localStorage.getItem('usedPairs')) || {};
+        let currentPair = null;
 
-  <script>
-    let votes = {
-      messi: 0,
-      ronaldo: 0
-    };
+        // Функция для получения случайной пары
+        function getRandomPair() {
+            const availablePlayers = players.filter(p => 
+                !usedPairs[`${currentPair?.a}-${p.id}`] && 
+                !usedPairs[`${p.id}-${currentPair?.a}`] &&
+                p.id !== currentPair?.a
+            );
 
-    function vote(player) {
-      votes[player]++;
-      document.getElementById(`vote-${player}`).innerText = votes[player];
-    }
-  </script>
+            if (availablePlayers.length < 1) {
+                alert('Все возможные пары были показаны!');
+                return;
+            }
+
+            const a = currentPair ? currentPair.a : players[Math.floor(Math.random() * players.length)].id;
+            const b = availablePlayers[Math.floor(Math.random() * availablePlayers.length)].id;
+            
+            currentPair = { a, b };
+            usedPairs[`${a}-${b}`] = true;
+            localStorage.setItem('usedPairs', JSON.stringify(usedPairs));
+            
+            document.getElementById('player1').textContent = players.find(p => p.id === a).name;
+            document.getElementById('player2').textContent = players.find(p => p.id === b).name;
+        }
+
+        // Функция голосования
+        function vote(result) {
+            if (!currentPair) return;
+
+            const playerA = players.find(p => p.id === currentPair.a);
+            const playerB = players.find(p => p.id === currentPair.b);
+
+            switch(result) {
+                case 1: // Победил первый
+                    playerA.score += 3;
+                    break;
+                case 2: // Победил второй
+                    playerB.score += 3;
+                    break;
+                case 0: // Ничья
+                    playerA.score += 1;
+                    playerB.score += 1;
+                    break;
+            }
+
+            localStorage.setItem('players', JSON.stringify(players));
+            updateResults();
+            getRandomPair();
+        }
+
+        // Обновление таблицы результатов
+        function updateResults() {
+            const sorted = [...players].sort((a, b) => b.score - a.score);
+            const tbody = document.querySelector('#results tbody');
+            tbody.innerHTML = sorted.map(p => `
+                <tr>
+                    <td>${p.name}</td>
+                    <td>${p.score}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Инициализация при загрузке
+        window.onload = () => {
+            getRandomPair();
+            updateResults();
+        };
+    </script>
 </body>
 </html>
