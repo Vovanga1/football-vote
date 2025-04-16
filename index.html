@@ -203,43 +203,86 @@
 	    { id: 100, name: 'Георгий Джикия', img: 'players/Георгий Джикия.jpg', score: 0 },
         ];
 
-        function vote(playerId) {
-            if (playerId === 0) {
-                alert('Ничья выбрана!');
+        function getRandomPair() {
+            const availablePlayers = [...players];
+
+            if (Object.keys(usedPairs).length >= players.length * (players.length - 1) / 2) {
+                alert('Все возможные пары были показаны!');
                 return;
             }
-            // Update the score for the selected player
-            players.forEach(player => {
-                if (player.id === playerId) {
-                    player.score += 1;
-                    db.ref('players/' + player.id).set({
-                        name: player.name,
-                        score: player.score
-                    });
-                }
-            });
+
+            const aIndex = Math.floor(Math.random() * availablePlayers.length);
+            const a = availablePlayers[aIndex].id;
+            availablePlayers.splice(aIndex, 1);
+
+            const availableForB = availablePlayers.filter(p =>
+                !usedPairs[`${a}-${p.id}`] && !usedPairs[`${p.id}-${a}`]
+            );
+
+            if (availableForB.length === 0) {
+                getRandomPair();
+                return;
+            }
+
+            const bIndex = Math.floor(Math.random() * availableForB.length);
+            const b = availableForB[bIndex].id;
+
+            currentPair = { a, b };
+            usedPairs[`${a}-${b}`] = true;
+            localStorage.setItem('usedPairs', JSON.stringify(usedPairs));
+
+            const playerA = players.find(p => p.id === a);
+            const playerB = players.find(p => p.id === b);
+
+            document.getElementById('player1').innerHTML = `
+                <img src="${playerA.img}" alt="${playerA.name}"><br>
+                <strong>${playerA.name}</strong>
+            `;
+            document.getElementById('player2').innerHTML = `
+                <img src="${playerB.img}" alt="${playerB.name}"><br>
+                <strong>${playerB.name}</strong>
+            `;
+        }
+
+        function vote(result) {
+            if (!currentPair) return;
+
+            const playerA = players.find(p => p.id === currentPair.a);
+            const playerB = players.find(p => p.id === currentPair.b);
+
+            switch(result) {
+                case 1:
+                    playerA.score += 3;
+                    break;
+                case 2:
+                    playerB.score += 3;
+                    break;
+                case 0:
+                    playerA.score += 1;
+                    playerB.score += 1;
+                    break;
+            }
+
+            localStorage.setItem('players', JSON.stringify(players));
             updateResults();
+            getRandomPair();
         }
 
         function updateResults() {
-            const resultsTable = document.querySelector('#results tbody');
-            resultsTable.innerHTML = '';
-            players.forEach(player => {
-                const row = document.createElement('tr');
-                row.innerHTML = `<td>${player.name}</td><td>${player.score}</td>`;
-                resultsTable.appendChild(row);
-            });
+            const sorted = [...players].sort((a, b) => b.score - a.score);
+            const tbody = document.querySelector('#results tbody');
+            tbody.innerHTML = sorted.map(p => `
+                <tr>
+                    <td>${p.name}</td>
+                    <td>${p.score}</td>
+                </tr>
+            `).join('');
         }
 
-        // Load results from Firebase
-        db.ref('players').on('value', (snapshot) => {
-            players = [];
-            snapshot.forEach((childSnapshot) => {
-                let player = childSnapshot.val();
-                players.push(player);
-            });
+        window.onload = () => {
+            getRandomPair();
             updateResults();
-        });
+        };
     </script>
 </body>
 </html>
