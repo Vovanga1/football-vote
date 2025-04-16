@@ -1,24 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Голосование за футболистов</title>
-
-  <!-- Подключаем CDN для React, ReactDOM и Babel (чтобы писать JSX в браузере) -->
-  <script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone@7.21.5/babel.min.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100 text-center p-6">
+  <h1 class="text-3xl font-bold mb-6">Кто круче?</h1>
 
-  <div id="root"></div> <!-- Место для рендеринга React-компонентов -->
+  <div id="vote-section" class="flex justify-center items-center gap-10 flex-wrap mb-6"></div>
 
-  <script type="text/babel">
-    // Начинаем вставлять код React прямо в этот файл
+  <button id="draw-button" class="bg-yellow-500 text-white px-6 py-3 rounded mb-6">Ничья</button>
 
-    // Данные футболистов
+  <div>
+    <button id="show-results" class="bg-blue-600 text-white px-4 py-2 rounded">Показать результаты</button>
+  </div>
+
+  <div id="results" class="mt-8 hidden">
+    <h2 class="text-2xl font-semibold mb-4">Результаты:</h2>
+    <table class="mx-auto border-collapse border border-gray-400">
+      <thead>
+        <tr>
+          <th class="border p-2">Имя</th>
+          <th class="border p-2">Голоса</th>
+        </tr>
+      </thead>
+      <tbody id="results-body"></tbody>
+    </table>
+  </div>
+
+  <script>
     const players = [
             { id: 1, name: 'Андрей Аршавин', img: 'players/Андрей Аршавин.jpg', score: 0 },
 	    { id: 2, name: 'Игорь Акинфеев', img: 'players/Игорь Акинфеев.jpg', score: 0 },
@@ -122,115 +134,90 @@
 	    { id: 100, name: 'Георгий Джикия', img: 'players/Георгий Джикия.jpg', score: 0 },
     ];
 
-    // Компонент для отображения кнопок голосования
-    const VotingPage = () => {
-      const [vote, setVote] = React.useState(null);
-      const [draw, setDraw] = React.useState(false);
+    let currentPair = [];
 
-      const handleVote = (id) => {
-        setVote(id);
-        setDraw(false); // Убираем ничью, если был сделан голос
-      };
+    // Загружаем очки из localStorage
+    players.forEach(p => {
+      const saved = localStorage.getItem(`player-${p.id}`);
+      if (saved !== null) {
+        p.score = parseInt(saved, 10);
+      }
+    });
 
-      const handleDraw = () => {
-        setDraw(true);
-      };
+    function getRandomPair() {
+      const shuffled = [...players].sort(() => 0.5 - Math.random());
+      return shuffled.slice(0, 2);
+    }
 
-      return (
-        <div className="flex flex-col items-center p-8">
-          <h1 className="text-2xl font-bold mb-4">Голосование за футболистов</h1>
+    function renderVoteOptions() {
+      currentPair = getRandomPair();
+      const container = document.getElementById('vote-section');
+      container.innerHTML = '';
 
-          <div className="flex justify-center space-x-8 mb-6">
-            {players.map((player) => (
-              <div key={player.id} className="text-center">
-                <img src={player.image} alt={player.name} className="w-40 h-40 object-cover rounded-full mb-4" />
-                <button
-                  onClick={() => handleVote(player.id)}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-700"
-                >
-                  Голосовать за {player.name}
-                </button>
-              </div>
-            ))}
-          </div>
+      currentPair.forEach(player => {
+        const div = document.createElement('div');
+        div.className = 'flex flex-col items-center';
 
-          <button
-            onClick={handleDraw}
-            className="mt-4 px-6 py-2 bg-gray-500 text-white rounded-full hover:bg-gray-700"
-          >
-            Ничья
-          </button>
+        const img = document.createElement('img');
+        img.src = player.img;
+        img.alt = player.name;
+        img.className = 'w-40 h-40 object-cover rounded-full mb-4';
 
-          {vote && !draw && (
-            <div className="mt-4 text-lg text-green-500">
-              Вы проголосовали за {players.find((p) => p.id === vote).name}.
-            </div>
-          )}
-          {draw && (
-            <div className="mt-4 text-lg text-yellow-500">
-              Результат: Ничья
-            </div>
-          )}
-        </div>
-      );
-    };
+        const name = document.createElement('p');
+        name.textContent = player.name;
+        name.className = 'mb-2 font-medium';
 
-    // Компонент для отображения таблицы результатов
-    const ResultsPage = () => {
-      return (
-        <div className="flex flex-col items-center p-8">
-          <h2 className="text-xl font-semibold mb-4">Результаты голосования</h2>
-          {/* Пока пустая таблица */}
-          <table className="min-w-full border-collapse table-auto">
-            <thead>
-              <tr className="bg-gray-200">
-                <th className="border p-2">Футболист</th>
-                <th className="border p-2">Голосов</th>
-              </tr>
-            </thead>
-            <tbody>
-              {players.map((player) => (
-                <tr key={player.id}>
-                  <td className="border p-2">{player.name}</td>
-                  <td className="border p-2">0</td> {/* Здесь будут реальные данные голосования */}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      );
-    };
+        const btn = document.createElement('button');
+        btn.textContent = 'Голосовать';
+        btn.className = 'bg-green-500 text-white px-4 py-2 rounded';
+        btn.onclick = () => vote(player.id);
 
-    // Основной компонент с маршрутизацией
-    const App = () => {
-      const [activePage, setActivePage] = React.useState('voting');
+        div.appendChild(img);
+        div.appendChild(name);
+        div.appendChild(btn);
 
-      return (
-        <div>
-          <div className="flex justify-center space-x-4 py-4 bg-gray-800">
-            <button
-              onClick={() => setActivePage('voting')}
-              className="text-white px-4 py-2 rounded-md hover:bg-gray-600"
-            >
-              Голосование
-            </button>
-            <button
-              onClick={() => setActivePage('results')}
-              className="text-white px-4 py-2 rounded-md hover:bg-gray-600"
-            >
-              Результаты
-            </button>
-          </div>
+        container.appendChild(div);
+      });
+    }
 
-          <div className="mt-8">
-            {activePage === 'voting' ? <VotingPage /> : <ResultsPage />}
-          </div>
-        </div>
-      );
-    };
+    function vote(id) {
+      const player = players.find(p => p.id === id);
+      if (player) {
+        player.score += 1;
+        localStorage.setItem(`player-${player.id}`, player.score);
+        renderVoteOptions();
+      }
+    }
 
-    // Рендерим приложение в контейнер #root
-    ReactDOM.render(<App />, document.getElementById('root'));
+    function draw() {
+      currentPair.forEach(player => {
+        player.score += 1;
+        localStorage.setItem(`player-${player.id}`, player.score);
+      });
+      renderVoteOptions();
+    }
+
+    function showResults() {
+      const results = document.getElementById('results');
+      const body = document.getElementById('results-body');
+      body.innerHTML = '';
+
+      players.sort((a, b) => b.score - a.score).forEach(player => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="border p-2">${player.name}</td>
+          <td class="border p-2">${player.score}</td>
+        `;
+        body.appendChild(row);
+      });
+
+      results.classList.remove('hidden');
+    }
+
+    document.getElementById('draw-button').addEventListener('click', draw);
+    document.getElementById('show-results').addEventListener('click', showResults);
+
+    renderVoteOptions();
   </script>
 </body>
 </html>
