@@ -203,6 +203,9 @@
 	    { id: 100, name: 'Георгий Джикия', img: 'players/Георгий Джикия.jpg', score: 0 },
         ];
 
+        let usedPairs = JSON.parse(localStorage.getItem('usedPairs')) || {};
+        let currentPair = null;
+
         function getRandomPair() {
             const availablePlayers = [...players];
 
