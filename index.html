@@ -1,108 +1,25 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Голосование за лучшего футболиста</title>
-    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-database-compat.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .players {
-            display: flex;
-            justify-content: space-around;
-            margin: 40px 0;
-        }
-        .player {
-            border: 2px solid #ccc;
-            padding: 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: 0.3s;
-            text-align: center;
-        }
-        .player:hover {
-            border-color: #00FF00;
-        }
-        .player img {
-            width: 400px;
-            height: auto;
-            border-radius: 10px;
-        }
-        .buttons {
-            text-align: center;
-            margin: 20px 0;
-        }
-        button {
-            padding: 10px 20px;
-            margin: 0 10px;
-            cursor: pointer;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 30px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #006400;
-            color: white;
-        }
-    </style>
-    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Голосование за футболистов</title>
+
+  <!-- Подключаем CDN для React, ReactDOM и Babel (чтобы писать JSX в браузере) -->
+  <script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.21.5/babel.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-    <h1>Кто лучший футболист?</h1>
-    <div class="players">
-        <div class="player" id="player1" onclick="vote(1)">
-            <img src="players/Андрей Аршавин.jpg" alt="Андрей Аршавин">
-            <h3>Андрей Аршавин</h3>
-        </div>
-        <div class="player" id="player2" onclick="vote(2)">
-            <img src="players/Игорь Акинфеев.jpg" alt="Игорь Акинфеев">
-            <h3>Игорь Акинфеев</h3>
-        </div>
-    </div>
-    <div class="buttons">
-        <button onclick="vote(0)">Ничья</button>
-    </div>
-    <h2>Таблица результатов</h2>
-    <table id="results">
-        <thead>
-            <tr>
-                <th>Игрок</th>
-                <th>Очки</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+<body class="bg-gray-100">
 
-    <script>
-        // 🔧 Твоя конфигурация Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyAd2i30miJYAXo0_TreJaBRM2UCiY4B8ds",
-            authDomain: "footballvoting-e69aa.firebaseapp.com",
-            databaseURL: "https://footballvoting-e69aa-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "footballvoting-e69aa",
-            storageBucket: "footballvoting-e69aa.appspot.com",
-            messagingSenderId: "863877355837",
-            appId: "1:863877355837:web:0b6f57698eab53ca8d8d54"
-        };
+  <div id="root"></div> <!-- Место для рендеринга React-компонентов -->
 
-        // ⚙️ Инициализация Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+  <script type="text/babel">
+    // Начинаем вставлять код React прямо в этот файл
 
-        let players = [
+    // Данные футболистов
+    const players = [
             { id: 1, name: 'Андрей Аршавин', img: 'players/Андрей Аршавин.jpg', score: 0 },
 	    { id: 2, name: 'Игорь Акинфеев', img: 'players/Игорь Акинфеев.jpg', score: 0 },
 	    { id: 3, name: 'Юрий Жирков', img: 'players/Юрий Жирков.jpg', score: 0 },
@@ -203,91 +120,117 @@
 	    { id: 98, name: 'Александр Точилин', img: 'players/Александр Точилин.jpg', score: 0 },
 	    { id: 99, name: 'Дмитрий Бородин', img: 'players/Дмитрий Бородин.jpg', score: 0 },
 	    { id: 100, name: 'Георгий Джикия', img: 'players/Георгий Джикия.jpg', score: 0 },
-        ];
+    ];
 
-        let usedPairs = JSON.parse(localStorage.getItem('usedPairs')) || {};
-        let currentPair = null;
+    // Компонент для отображения кнопок голосования
+    const VotingPage = () => {
+      const [vote, setVote] = React.useState(null);
+      const [draw, setDraw] = React.useState(false);
 
-        function getRandomPair() {
-            const availablePlayers = [...players];
+      const handleVote = (id) => {
+        setVote(id);
+        setDraw(false); // Убираем ничью, если был сделан голос
+      };
 
-            if (Object.keys(usedPairs).length >= players.length * (players.length - 1) / 2) {
-                alert('Все возможные пары были показаны!');
-                return;
-            }
+      const handleDraw = () => {
+        setDraw(true);
+      };
 
-            const aIndex = Math.floor(Math.random() * availablePlayers.length);
-            const a = availablePlayers[aIndex].id;
-            availablePlayers.splice(aIndex, 1);
+      return (
+        <div className="flex flex-col items-center p-8">
+          <h1 className="text-2xl font-bold mb-4">Голосование за футболистов</h1>
 
-            const availableForB = availablePlayers.filter(p =>
-                !usedPairs[`${a}-${p.id}`] && !usedPairs[`${p.id}-${a}`]
-            );
+          <div className="flex justify-center space-x-8 mb-6">
+            {players.map((player) => (
+              <div key={player.id} className="text-center">
+                <img src={player.image} alt={player.name} className="w-40 h-40 object-cover rounded-full mb-4" />
+                <button
+                  onClick={() => handleVote(player.id)}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-700"
+                >
+                  Голосовать за {player.name}
+                </button>
+              </div>
+            ))}
+          </div>
 
-            if (availableForB.length === 0) {
-                getRandomPair();
-                return;
-            }
+          <button
+            onClick={handleDraw}
+            className="mt-4 px-6 py-2 bg-gray-500 text-white rounded-full hover:bg-gray-700"
+          >
+            Ничья
+          </button>
 
-            const bIndex = Math.floor(Math.random() * availableForB.length);
-            const b = availableForB[bIndex].id;
+          {vote && !draw && (
+            <div className="mt-4 text-lg text-green-500">
+              Вы проголосовали за {players.find((p) => p.id === vote).name}.
+            </div>
+          )}
+          {draw && (
+            <div className="mt-4 text-lg text-yellow-500">
+              Результат: Ничья
+            </div>
+          )}
+        </div>
+      );
+    };
 
-            currentPair = { a, b };
-            usedPairs[`${a}-${b}`] = true;
-            localStorage.setItem('usedPairs', JSON.stringify(usedPairs));
-
-            const playerA = players.find(p => p.id === a);
-            const playerB = players.find(p => p.id === b);
-
-            document.getElementById('player1').innerHTML = `
-                <img src="${playerA.img}" alt="${playerA.name}"><br>
-                <strong>${playerA.name}</strong>
-            `;
-            document.getElementById('player2').innerHTML = `
-                <img src="${playerB.img}" alt="${playerB.name}"><br>
-                <strong>${playerB.name}</strong>
-            `;
-        }
-
-        function vote(result) {
-            if (!currentPair) return;
-
-            const playerA = players.find(p => p.id === currentPair.a);
-            const playerB = players.find(p => p.id === currentPair.b);
-
-            switch(result) {
-                case 1:
-                    playerA.score += 3;
-                    break;
-                case 2:
-                    playerB.score += 3;
-                    break;
-                case 0:
-                    playerA.score += 1;
-                    playerB.score += 1;
-                    break;
-            }
-
-            localStorage.setItem('players', JSON.stringify(players));
-            updateResults();
-            getRandomPair();
-        }
-
-        function updateResults() {
-            const sorted = [...players].sort((a, b) => b.score - a.score);
-            const tbody = document.querySelector('#results tbody');
-            tbody.innerHTML = sorted.map(p => `
-                <tr>
-                    <td>${p.name}</td>
-                    <td>${p.score}</td>
+    // Компонент для отображения таблицы результатов
+    const ResultsPage = () => {
+      return (
+        <div className="flex flex-col items-center p-8">
+          <h2 className="text-xl font-semibold mb-4">Результаты голосования</h2>
+          {/* Пока пустая таблица */}
+          <table className="min-w-full border-collapse table-auto">
+            <thead>
+              <tr className="bg-gray-200">
+                <th className="border p-2">Футболист</th>
+                <th className="border p-2">Голосов</th>
+              </tr>
+            </thead>
+            <tbody>
+              {players.map((player) => (
+                <tr key={player.id}>
+                  <td className="border p-2">{player.name}</td>
+                  <td className="border p-2">0</td> {/* Здесь будут реальные данные голосования */}
                 </tr>
-            `).join('');
-        }
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    };
 
-        window.onload = () => {
-            getRandomPair();
-            updateResults();
-        };
-    </script>
+    // Основной компонент с маршрутизацией
+    const App = () => {
+      const [activePage, setActivePage] = React.useState('voting');
+
+      return (
+        <div>
+          <div className="flex justify-center space-x-4 py-4 bg-gray-800">
+            <button
+              onClick={() => setActivePage('voting')}
+              className="text-white px-4 py-2 rounded-md hover:bg-gray-600"
+            >
+              Голосование
+            </button>
+            <button
+              onClick={() => setActivePage('results')}
+              className="text-white px-4 py-2 rounded-md hover:bg-gray-600"
+            >
+              Результаты
+            </button>
+          </div>
+
+          <div className="mt-8">
+            {activePage === 'voting' ? <VotingPage /> : <ResultsPage />}
+          </div>
+        </div>
+      );
+    };
+
+    // Рендерим приложение в контейнер #root
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
 </body>
 </html>
