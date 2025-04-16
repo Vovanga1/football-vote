@@ -55,30 +55,20 @@
             color: white;
         }
     </style>
- <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
 </head>
 <body>
     <h1>Кто лучший футболист?</h1>
     <div class="players">
- <script>
-    // 🔧 Твоя конфигурация Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyAd2i30miJYAXo0_TreJaBRM2UCiY4B8ds",
-      authDomain: "footballvoting-e69aa.firebaseapp.com",
-      databaseURL: "https://footballvoting-e69aa-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "footballvoting-e69aa",
-      storageBucket: "footballvoting-e69aa.appspot.com",
-      messagingSenderId: "863877355837",
-      appId: "1:863877355837:web:0b6f57698eab53ca8d8d54"
-    };
-
-    // ⚙️ Инициализация Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-        <div class="player" id="player1" onclick="vote(1)"></div>
-        <div class="player" id="player2" onclick="vote(2)"></div>
+        <div class="player" id="player1" onclick="vote(1)">
+            <img src="players/Андрей Аршавин.jpg" alt="Андрей Аршавин">
+            <h3>Андрей Аршавин</h3>
+        </div>
+        <div class="player" id="player2" onclick="vote(2)">
+            <img src="players/Игорь Акинфеев.jpg" alt="Игорь Акинфеев">
+            <h3>Игорь Акинфеев</h3>
+        </div>
     </div>
     <div class="buttons">
         <button onclick="vote(0)">Ничья</button>
@@ -95,7 +85,21 @@
     </table>
 
     <script>
-        // Список игроков
+        // 🔧 Твоя конфигурация Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAd2i30miJYAXo0_TreJaBRM2UCiY4B8ds",
+            authDomain: "footballvoting-e69aa.firebaseapp.com",
+            databaseURL: "https://footballvoting-e69aa-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "footballvoting-e69aa",
+            storageBucket: "footballvoting-e69aa.appspot.com",
+            messagingSenderId: "863877355837",
+            appId: "1:863877355837:web:0b6f57698eab53ca8d8d54"
+        };
+
+        // ⚙️ Инициализация Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
         let players = [
             { id: 1, name: 'Андрей Аршавин', img: 'players/Андрей Аршавин.jpg', score: 0 },
 	    { id: 2, name: 'Игорь Акинфеев', img: 'players/Игорь Акинфеев.jpg', score: 0 },
@@ -199,90 +203,43 @@
 	    { id: 100, name: 'Георгий Джикия', img: 'players/Георгий Джикия.jpg', score: 0 },
         ];
 
-        // 
-        let usedPairs = JSON.parse(localStorage.getItem('usedPairs')) || {};
-        let currentPair = null;
-
-        function getRandomPair() {
-            const availablePlayers = [...players];
-
-            if (Object.keys(usedPairs).length >= players.length * (players.length - 1) / 2) {
-                alert('Все возможные пары были показаны!');
+        function vote(playerId) {
+            if (playerId === 0) {
+                alert('Ничья выбрана!');
                 return;
             }
-
-            const aIndex = Math.floor(Math.random() * availablePlayers.length);
-            const a = availablePlayers[aIndex].id;
-            availablePlayers.splice(aIndex, 1);
-
-            const availableForB = availablePlayers.filter(p =>
-                !usedPairs[`${a}-${p.id}`] && !usedPairs[`${p.id}-${a}`]
-            );
-
-            if (availableForB.length === 0) {
-                getRandomPair();
-                return;
-            }
-
-            const bIndex = Math.floor(Math.random() * availableForB.length);
-            const b = availableForB[bIndex].id;
-
-            currentPair = { a, b };
-            usedPairs[`${a}-${b}`] = true;
-            localStorage.setItem('usedPairs', JSON.stringify(usedPairs));
-
-            const playerA = players.find(p => p.id === a);
-            const playerB = players.find(p => p.id === b);
-
-            document.getElementById('player1').innerHTML = `
-                <img src="${playerA.img}" alt="${playerA.name}"><br>
-                <strong>${playerA.name}</strong>
-            `;
-            document.getElementById('player2').innerHTML = `
-                <img src="${playerB.img}" alt="${playerB.name}"><br>
-                <strong>${playerB.name}</strong>
-            `;
-        }
-
-        function vote(result) {
-            if (!currentPair) return;
-
-            const playerA = players.find(p => p.id === currentPair.a);
-            const playerB = players.find(p => p.id === currentPair.b);
-
-            switch(result) {
-                case 1:
-                    playerA.score += 3;
-                    break;
-                case 2:
-                    playerB.score += 3;
-                    break;
-                case 0:
-                    playerA.score += 1;
-                    playerB.score += 1;
-                    break;
-            }
-
-            localStorage.setItem('players', JSON.stringify(players));
+            // Update the score for the selected player
+            players.forEach(player => {
+                if (player.id === playerId) {
+                    player.score += 1;
+                    db.ref('players/' + player.id).set({
+                        name: player.name,
+                        score: player.score
+                    });
+                }
+            });
             updateResults();
-            getRandomPair();
         }
 
         function updateResults() {
-            const sorted = [...players].sort((a, b) => b.score - a.score);
-            const tbody = document.querySelector('#results tbody');
-            tbody.innerHTML = sorted.map(p => `
-                <tr>
-                    <td>${p.name}</td>
-                    <td>${p.score}</td>
-                </tr>
-            `).join('');
+            const resultsTable = document.querySelector('#results tbody');
+            resultsTable.innerHTML = '';
+            players.forEach(player => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${player.name}</td><td>${player.score}</td>`;
+                resultsTable.appendChild(row);
+            });
         }
 
-        window.onload = () => {
-            getRandomPair();
+        // Load results from Firebase
+        db.ref('players').on('value', (snapshot) => {
+            players = [];
+            snapshot.forEach((childSnapshot) => {
+                let player = childSnapshot.val();
+                players.push(player);
+            });
             updateResults();
-        };
+        });
     </script>
 </body>
 </html>
