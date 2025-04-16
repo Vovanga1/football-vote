@@ -178,32 +178,21 @@
     }
 
     function vote(id) {
-      if (id !== null) {
-        const votedPlayer = players.find(p => p.id === id);
-        votedPlayer.score++;
-      }
-      saveScores();
-      renderPlayers();
+  if (id !== null) {
+    const votedPlayer = players.find(p => p.id === id);
+    if (votedPlayer) {
+      votedPlayer.score += 3;
     }
-
-    function toggleResults() {
-      const container = document.getElementById('results-container');
-      const table = document.getElementById('results-table');
-      if (container.classList.contains('hidden')) {
-        table.innerHTML = '';
-        players.forEach(p => {
-          table.innerHTML += `
-            <tr>
-              <td class="border px-4 py-2">${p.name}</td>
-              <td class="border px-4 py-2">${p.score}</td>
-            </tr>
-          `;
-        });
-        container.classList.remove('hidden');
-      } else {
-        container.classList.add('hidden');
-      }
-    }
+  } else {
+    // Ничья — по 1 очку каждому
+    const p1 = players.find(p => p.id === player1.id);
+    const p2 = players.find(p => p.id === player2.id);
+    if (p1) p1.score += 1;
+    if (p2) p2.score += 1;
+  }
+  saveScores();
+  renderPlayers();
+}
 
     loadScores();
     renderPlayers();
