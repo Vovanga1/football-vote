@@ -2,31 +2,35 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Голосование за футболистов</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 text-center p-6">
-  <h1 class="text-3xl font-bold mb-6">Кто круче?</h1>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-start p-6">
+  <h1 class="text-3xl font-bold mb-6">Кто лучший футболист?</h1>
 
-  <div id="vote-section" class="flex justify-center items-center gap-10 flex-wrap mb-6"></div>
-
-  <button id="draw-button" class="bg-yellow-500 text-white px-6 py-3 rounded mb-6">Ничья</button>
-
-  <div>
-    <button id="show-results" class="bg-blue-600 text-white px-4 py-2 rounded">Показать результаты</button>
+  <div id="vote-container" class="flex flex-col items-center gap-4">
+    <div class="flex gap-10">
+      <div id="player1" class="flex flex-col items-center"></div>
+      <div id="player2" class="flex flex-col items-center"></div>
+    </div>
+    <button onclick="vote(null)" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Ничья</button>
   </div>
 
-  <div id="results" class="mt-8 hidden">
-    <h2 class="text-2xl font-semibold mb-4">Результаты:</h2>
-    <table class="mx-auto border-collapse border border-gray-400">
+  <div class="mt-10">
+    <button onclick="toggleResults()" class="bg-blue-600 hover:bg-blue-800 text-white py-2 px-4 rounded">Показать результаты</button>
+  </div>
+
+  <div id="results-container" class="hidden mt-6 w-full max-w-xl">
+    <h2 class="text-2xl font-semibold mb-4">Результаты голосования</h2>
+    <table class="min-w-full bg-white border border-gray-300">
       <thead>
         <tr>
-          <th class="border p-2">Имя</th>
-          <th class="border p-2">Голоса</th>
+          <th class="py-2 px-4 border-b">Футболист</th>
+          <th class="py-2 px-4 border-b">Голоса</th>
         </tr>
       </thead>
-      <tbody id="results-body"></tbody>
+      <tbody id="results-table"></tbody>
     </table>
   </div>
 
@@ -134,90 +138,75 @@
 	    { id: 100, name: 'Георгий Джикия', img: 'players/Георгий Джикия.jpg', score: 0 },
     ];
 
-    let currentPair = [];
+    let player1, player2;
 
-    // Загружаем очки из localStorage
-    players.forEach(p => {
-      const saved = localStorage.getItem(`player-${p.id}`);
-      if (saved !== null) {
-        p.score = parseInt(saved, 10);
+    // Загружаем результаты из localStorage
+    function loadScores() {
+      const saved = localStorage.getItem('football_votes');
+      if (saved) {
+        const savedScores = JSON.parse(saved);
+        players.forEach(p => {
+          const match = savedScores.find(s => s.id === p.id);
+          if (match) p.score = match.score;
+        });
       }
-    });
-
-    function getRandomPair() {
-      const shuffled = [...players].sort(() => 0.5 - Math.random());
-      return shuffled.slice(0, 2);
     }
 
-    function renderVoteOptions() {
-      currentPair = getRandomPair();
-      const container = document.getElementById('vote-section');
-      container.innerHTML = '';
+    function saveScores() {
+      localStorage.setItem('football_votes', JSON.stringify(players));
+    }
 
-      currentPair.forEach(player => {
-        const div = document.createElement('div');
-        div.className = 'flex flex-col items-center';
+    function getTwoRandomPlayers() {
+      let shuffled = players.sort(() => 0.5 - Math.random());
+      return [shuffled[0], shuffled[1]];
+    }
 
-        const img = document.createElement('img');
-        img.src = player.img;
-        img.alt = player.name;
-        img.className = 'w-40 h-40 object-cover rounded-full mb-4';
-
-        const name = document.createElement('p');
-        name.textContent = player.name;
-        name.className = 'mb-2 font-medium';
-
-        const btn = document.createElement('button');
-        btn.textContent = 'Голосовать';
-        btn.className = 'bg-green-500 text-white px-4 py-2 rounded';
-        btn.onclick = () => vote(player.id);
-
-        div.appendChild(img);
-        div.appendChild(name);
-        div.appendChild(btn);
-
-        container.appendChild(div);
-      });
+    function renderPlayers() {
+      [player1, player2] = getTwoRandomPlayers();
+      const p1 = document.getElementById('player1');
+      const p2 = document.getElementById('player2');
+      p1.innerHTML = `
+        <img src="${player1.img}" class="w-40 h-40 object-cover rounded mb-2" />
+        <p class="text-xl font-semibold">${player1.name}</p>
+        <button onclick="vote(${player1.id})" class="mt-2 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Голосовать</button>
+      `;
+      p2.innerHTML = `
+        <img src="${player2.img}" class="w-40 h-40 object-cover rounded mb-2" />
+        <p class="text-xl font-semibold">${player2.name}</p>
+        <button onclick="vote(${player2.id})" class="mt-2 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Голосовать</button>
+      `;
     }
 
     function vote(id) {
-      const player = players.find(p => p.id === id);
-      if (player) {
-        player.score += 1;
-        localStorage.setItem(`player-${player.id}`, player.score);
-        renderVoteOptions();
+      if (id !== null) {
+        const votedPlayer = players.find(p => p.id === id);
+        votedPlayer.score++;
+      }
+      saveScores();
+      renderPlayers();
+    }
+
+    function toggleResults() {
+      const container = document.getElementById('results-container');
+      const table = document.getElementById('results-table');
+      if (container.classList.contains('hidden')) {
+        table.innerHTML = '';
+        players.forEach(p => {
+          table.innerHTML += `
+            <tr>
+              <td class="border px-4 py-2">${p.name}</td>
+              <td class="border px-4 py-2">${p.score}</td>
+            </tr>
+          `;
+        });
+        container.classList.remove('hidden');
+      } else {
+        container.classList.add('hidden');
       }
     }
 
-    function draw() {
-      currentPair.forEach(player => {
-        player.score += 1;
-        localStorage.setItem(`player-${player.id}`, player.score);
-      });
-      renderVoteOptions();
-    }
-
-    function showResults() {
-      const results = document.getElementById('results');
-      const body = document.getElementById('results-body');
-      body.innerHTML = '';
-
-      players.sort((a, b) => b.score - a.score).forEach(player => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td class="border p-2">${player.name}</td>
-          <td class="border p-2">${player.score}</td>
-        `;
-        body.appendChild(row);
-      });
-
-      results.classList.remove('hidden');
-    }
-
-    document.getElementById('draw-button').addEventListener('click', draw);
-    document.getElementById('show-results').addEventListener('click', showResults);
-
-    renderVoteOptions();
+    loadScores();
+    renderPlayers();
   </script>
 </body>
 </html>
