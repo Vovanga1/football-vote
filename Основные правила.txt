@@ -1,0 +1,6 @@
+$ git add index.html
+git commit -m "Обновление: добавлен блок с голосованием"
+git push origin main
+
+
+Для обновления сайта
