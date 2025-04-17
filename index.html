@@ -311,25 +311,31 @@
         let currentPair = null;
         let history = [];
 
-        // Загрузка данных из Firebase
-        function loadData() {
-            db.ref('players').on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    players = data;
-                    updateResults();
-                }
-            });
+    function loadData() {
+        db.ref('players').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                // Преобразуем объект Firebase в массив
+                players = Object.keys(data).map(key => data[key]);
+                updateResults();
+                // Инициализируем первую пару после загрузки данных
+                getRandomPair();
+            } else {
+                // Если данных нет в Firebase, используем локальный массив
+                players = [...players]; // Создаем копию исходного массива
+                getRandomPair();
+            }
+        });
 
-            db.ref('history').on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    history = Object.values(data);
-                    updateHistoryTable();
-                    updatePlayerSelect();
-                }
-            });
-        }
+        db.ref('history').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                history = Object.values(data);
+                updateHistoryTable();
+                updatePlayerSelect();
+            }
+        });
+    }
 
         // Голосование
 function vote(result) {
@@ -467,7 +473,6 @@ function vote(result) {
         // Запуск при загрузке страницы
         window.onload = () => {
             loadData();
-            getRandomPair();
         };
     </script>
 </body>
