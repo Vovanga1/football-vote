@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Голосование за лучшего футболиста</title>
+    <title>Голосование за лучшего футболиста России</title>
     <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-database-compat.js"></script>
     <style>
@@ -149,16 +149,16 @@
     <!-- Вкладка голосования -->
     <div id="voting" class="tab-content active">
         <div class="player-container">
-        <div class="player" id="player1" onclick="vote(1)">
-            <img src="" alt="" id="player1-img">
-            <h3 id="player1-name">Загрузка...</h3>
+            <div class="player" id="player1" onclick="vote(1)">
+                <img src="" alt="" id="player1-img">
+                <h3 id="player1-name">Загрузка...</h3>
+            </div>
+            <span class="vs-text">vs</span>
+            <div class="player" id="player2" onclick="vote(2)">
+                <img src="" alt="" id="player2-img">
+                <h3 id="player2-name">Загрузка...</h3>
+            </div>
         </div>
-        <span class="vs-text">vs</span>
-        <div class="player" id="player2" onclick="vote(2)">
-            <img src="" alt="" id="player2-img">
-            <h3 id="player2-name">Загрузка...</h3>
-        </div>
-    </div>
         <div class="buttons">
             <button onclick="getRandomPair()">Следующая пара</button>
         </div>
@@ -238,7 +238,7 @@
         }
         const db = firebase.database();
 
-        // Список игроков
+        // Полный список из 100 игроков
         let players = [
             { id: 1, name: 'Андрей Аршавин', img: 'players/Андрей Аршавин.jpg', score: 0 },
             { id: 2, name: 'Игорь Акинфеев', img: 'players/Игорь Акинфеев.jpg', score: 0 },
@@ -345,30 +345,54 @@
         let currentPair = null;
         let history = [];
 
-        // Загрузка данных из Firebase
+        // Инициализация данных в Firebase
+        function initializeFirebaseData() {
+            const initialData = {};
+            players.forEach(player => {
+                initialData[player.id] = {
+                    name: player.name,
+                    img: player.img,
+                    score: 0
+                };
+            });
+            return db.ref('players').set(initialData);
+        }
+
+        // Загрузка данных
         function loadData() {
-            db.ref('players').on('value', (snapshot) => {
+            db.ref('players').once('value').then(snapshot => {
                 const data = snapshot.val();
-                if (data) {
-                    players = Object.values(data);
+                if (data && Object.keys(data).length === 100) {
+                    players = Object.values(data).map(p => ({
+                        id: Number(p.id),
+                        name: p.name,
+                        img: p.img,
+                        score: Number(p.score) || 0
+                    }));
                     console.log('Загружено игроков:', players.length);
-                    updateResults();
-                    if (!currentPair) getRandomPair();
                 } else {
-                    // Инициализируем Firebase начальными данными
-                    const initialData = {};
-                    players.forEach(player => {
-                        initialData[player.id] = player;
+                    console.log('Инициализируем Firebase...');
+                    return initializeFirebaseData().then(() => {
+                        return db.ref('players').once('value');
+                    }).then(snapshot => {
+                        players = Object.values(snapshot.val()).map(p => ({
+                            id: Number(p.id),
+                            name: p.name,
+                            img: p.img,
+                            score: Number(p.score) || 0
+                        }));
                     });
-                    db.ref('players').set(initialData)
-                        .then(() => console.log('Данные инициализированы'))
-                        .catch(error => console.error('Ошибка инициализации:', error));
                 }
+            }).then(() => {
+                updateResults();
+                getRandomPair();
+            }).catch(error => {
+                console.error('Ошибка загрузки:', error);
             });
 
-            db.ref('history').on('value', (snapshot) => {
-                const data = snapshot.val();
-                history = data ? Object.values(data) : [];
+            // Загрузка истории
+            db.ref('history').on('value', snapshot => {
+                history = snapshot.val() ? Object.values(snapshot.val()) : [];
                 updateHistoryTable();
                 updatePlayerSelect();
             });
@@ -377,30 +401,31 @@
         // Голосование
         function vote(result) {
             if (!currentPair) {
-                console.error('Не выбрана текущая пара');
-                getRandomPair();
-                return;
+                console.error('Текущая пара не установлена');
+                return getRandomPair();
             }
 
             const playerA = players.find(p => p.id === currentPair.a);
             const playerB = players.find(p => p.id === currentPair.b);
             
             if (!playerA || !playerB) {
-                console.error('Игроки не найдены');
-                getRandomPair();
-                return;
+                console.error('Игроки не найдены', {
+                    currentPair,
+                    availableIds: players.map(p => p.id)
+                });
+                return getRandomPair();
             }
 
             // Обновляем очки
-            if (result === 1) playerA.score += 3;
-            else if (result === 2) playerB.score += 3;
+            if (result === 1) playerA.score = (playerA.score || 0) + 3;
+            else if (result === 2) playerB.score = (playerB.score || 0) + 3;
 
-            // Подготовка обновления для Firebase
-            const updates = {};
-            updates[`players/${playerA.id}`] = playerA;
-            updates[`players/${playerB.id}`] = playerB;
+            // Подготовка данных для Firebase
+            const updates = {
+                [`players/${playerA.id}/score`]: Number(playerA.score),
+                [`players/${playerB.id}/score`]: Number(playerB.score)
+            };
 
-            // История голосования
             const historyEntry = {
                 player1: playerA.name,
                 player2: playerB.name,
@@ -411,7 +436,7 @@
                 resultValue: result
             };
 
-            // Сохраняем изменения
+            // Сохраняем с обработкой ошибок
             db.ref().update(updates)
                 .then(() => db.ref('history').push(historyEntry))
                 .then(() => {
@@ -420,6 +445,7 @@
                 })
                 .catch(error => {
                     console.error('Ошибка сохранения:', error);
+                    getRandomPair();
                 });
         }
 
@@ -440,7 +466,7 @@
             const player1 = players[player1Index];
             const player2 = players[player2Index];
 
-            // Обновляем отображение
+            // Обновляем DOM
             document.getElementById('player1-img').src = player1.img;
             document.getElementById('player1-img').alt = player1.name;
             document.getElementById('player1-name').textContent = player1.name;
@@ -449,7 +475,12 @@
             document.getElementById('player2-img').alt = player2.name;
             document.getElementById('player2-name').textContent = player2.name;
 
-            currentPair = { a: player1.id, b: player2.id };
+            // Сохраняем текущую пару
+            currentPair = { 
+                a: Number(player1.id), 
+                b: Number(player2.id) 
+            };
+            
             console.log('Новая пара:', player1.name, 'vs', player2.name);
         }
 
@@ -476,7 +507,7 @@
                     <td>${entry.player2}</td>
                     <td>${entry.result}</td>
                 </tr>
-            `).join('');
+            `).reverse().join('');
         }
 
         // Обновление списка игроков для статистики
@@ -523,27 +554,22 @@
 
         // Переключение вкладок
         function switchTab(tabId) {
-            // Скрыть все вкладки
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
             });
             
-            // Убрать активный класс со всех табов
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.classList.remove('active');
             });
 
-            // Показать выбранную вкладку
             document.getElementById(tabId).classList.add('active');
             
-            // Активировать соответствующий таб
             document.querySelectorAll('.tab').forEach(tab => {
                 if (tab.getAttribute('onclick').includes(tabId)) {
                     tab.classList.add('active');
                 }
             });
 
-            // Особые действия при переключении на определенные вкладки
             if (tabId === 'stats') {
                 updatePlayerSelect();
             }
@@ -553,7 +579,6 @@
         window.onload = () => {
             console.log('Страница загружена');
             loadData();
-            getRandomPair();
         };
     </script>
 </body>
