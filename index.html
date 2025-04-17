@@ -187,8 +187,8 @@
     // Ничья — по 1 очку каждому
     const p1 = players.find(p => p.id === player1.id);
     const p2 = players.find(p => p.id === player2.id);
-    if (p1) p1.score += 1;
-    if (p2) p2.score += 1;
+    if (p1) p1.score += 3;
+    if (p2) p2.score += 3;
   }
   saveScores();
   renderPlayers();
