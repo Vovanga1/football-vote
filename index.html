@@ -232,36 +232,35 @@
   }
 
   function vote(playerId) {
-    if (playerId !== null) {
-      const votedPlayer = players.find(p => p.id === playerId);
-      if (votedPlayer) votedPlayer.score++;
-    }
-    renderPlayers();
+  if (playerId !== null) {
+    const votedPlayer = players.find(p => p.id === playerId);
+    if (votedPlayer) votedPlayer.score += 3;
   }
 
-  function toggleResults() {
-    const resultsContainer = document.getElementById('results-container');
-    const resultsTable = document.getElementById('results-table');
+  renderPlayers();
 
-    if (resultsContainer.classList.contains('hidden')) {
-      resultsContainer.classList.remove('hidden');
-      resultsTable.innerHTML = '';
+  // Если окно с результатами открыто — обновим его
+  const resultsContainer = document.getElementById('results-container');
+  if (!resultsContainer.classList.contains('hidden')) {
+    updateResultsTable();
+  }
+}
+  function updateResultsTable() {
+  const resultsTable = document.getElementById('results-table');
+  resultsTable.innerHTML = '';
 
-      const sorted = [...players].sort((a, b) => b.score - a.score);
-      for (const player of sorted) {
-        if (player.score > 0) {
-          resultsTable.innerHTML += `
-            <tr>
-              <td class="py-2 px-4 border-b">${player.name}</td>
-              <td class="py-2 px-4 border-b">${player.score}</td>
-            </tr>
-          `;
-        }
-      }
-    } else {
-      resultsContainer.classList.add('hidden');
+  const sorted = [...players].sort((a, b) => b.score - a.score);
+  for (const player of sorted) {
+    if (player.score > 0) {
+      resultsTable.innerHTML += `
+        <tr>
+          <td class="py-2 px-4 border-b">${player.name}</td>
+          <td class="py-2 px-4 border-b">${player.score}</td>
+        </tr>
+      `;
     }
   }
+}
 
   // Начальная отрисовка
   renderPlayers();
