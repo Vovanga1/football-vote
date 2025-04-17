@@ -381,35 +381,31 @@
         }
 
         // Случайная пара игроков
-        function getRandomPair() {
-            if (!players || players.length < 2) {
-                console.error('Not enough players available');
-                return;
-            }
-
-            const player1Index = Math.floor(Math.random() * players.length);
-            let player2Index;
-            
-            do {
-                player2Index = Math.floor(Math.random() * players.length);
-            } while (player2Index === player1Index);
-
-            const player1 = players[player1Index];
-            const player2 = players[player2Index];
-
-            // Обновляем отображение
-            document.getElementById('player1').innerHTML = `
-                <img src="${player1.img}" alt="${player1.name}">
-                <h3>${player1.name}</h3>
-            `;
-            document.getElementById('player2').innerHTML = `
-                <img src="${player2.img}" alt="${player2.name}">
-                <h3>${player2.name}</h3>
-            `;
-
-            currentPair = { a: player1.id, b: player2.id };
-            console.log('New pair generated:', currentPair);
+    function getRandomPair() {
+        if (!players || players.length < 2) {
+            console.error('Недостаточно игроков');
+            return;
         }
+
+        const index1 = Math.floor(Math.random() * players.length);
+        let index2;
+    
+        do {
+            index2 = Math.floor(Math.random() * players.length);
+        } while (index2 === index1);
+
+        const player1 = players[index1];
+        const player2 = players[index2];
+
+        // Обновляем отображение
+        document.getElementById('player1-img').src = player1.img;
+        document.getElementById('player1-name').textContent = player1.name;
+    
+        document.getElementById('player2-img').src = player2.img;
+        document.getElementById('player2-name').textContent = player2.name;
+
+        currentPair = { a: player1.id, b: player2.id };
+    }
 
         // Обновление таблицы результатов
         function updateResults() {
