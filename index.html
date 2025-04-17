@@ -33,6 +33,14 @@
       <tbody id="results-table"></tbody>
     </table>
   </div>
+  <div class="dropdown">
+  <button onclick="toggleList()">Выбрать игрока</button>
+  <div id="dropdown-list" class="hidden">
+    <div onclick="selectPlayer('Игрок 1')">Игрок 1</div>
+    <div onclick="selectPlayer('Игрок 2')">Игрок 2</div>
+    <div onclick="selectPlayer('Игрок 3')">Игрок 3</div>
+  </div>
+  </div>
 
   <script>
     const players = [
