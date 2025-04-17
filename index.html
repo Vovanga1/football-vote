@@ -35,19 +35,6 @@
         .tab-content.active {
             display: block;
         }
-        .player-selectors {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            margin: 20px 0;
-            flex-wrap: wrap;
-        }
-        .player-selectors select {
-            padding: 8px;
-            border-radius: 5px;
-            min-width: 200px;
-        }
         .players {
             display: flex;
             justify-content: center;
@@ -114,6 +101,13 @@
             font-size: 24px;
             font-weight: bold;
             margin: 0 15px;
+            align-self: center;
+        }
+        .player-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
         }
     </style>
 </head>
@@ -128,29 +122,19 @@
 
     <!-- Вкладка голосования -->
     <div id="voting" class="tab-content active">
-        <div class="player-selectors">
-            <select id="selectPlayer1" onchange="updateSelectedPlayers()">
-                <option value="">Выберите игрока 1</option>
-            </select>
-            <span class="vs-text">vs</span>
-            <select id="selectPlayer2" onchange="updateSelectedPlayers()">
-                <option value="">Выберите игрока 2</option>
-            </select>
-        </div>
-
-        <div class="players">
+        <div class="player-container">
             <div class="player" id="player1" onclick="vote(1)">
                 <img src="players/Андрей Аршавин.jpg" alt="Игрок 1">
                 <h3>Игрок 1</h3>
             </div>
+            <span class="vs-text">vs</span>
             <div class="player" id="player2" onclick="vote(2)">
                 <img src="players/Игорь Акинфеев.jpg" alt="Игрок 2">
                 <h3>Игрок 2</h3>
             </div>
         </div>
         <div class="buttons">
-            <button id="voteButton" onclick="vote(0)" disabled>Ничья</button>
-            <button onclick="getRandomPair()">Случайная пара</button>
+            <button onclick="getRandomPair()">Пропустить пару</button>
         </div>
     </div>
 
@@ -347,46 +331,6 @@
             });
         }
 
-        // Инициализация выбора игроков
-        function initPlayerSelectors() {
-            const select1 = document.getElementById('selectPlayer1');
-            const select2 = document.getElementById('selectPlayer2');
-            const playerSelect = document.getElementById('playerSelect');
-
-            players.forEach(player => {
-                const option = `<option value="${player.id}">${player.name}</option>`;
-                select1.innerHTML += option;
-                select2.innerHTML += option;
-                playerSelect.innerHTML += option;
-            });
-        }
-
-        // Обновление выбранных игроков
-        function updateSelectedPlayers() {
-            const player1Id = document.getElementById('selectPlayer1').value;
-            const player2Id = document.getElementById('selectPlayer2').value;
-            const voteButton = document.getElementById('voteButton');
-
-            if (player1Id && player2Id && player1Id !== player2Id) {
-                const player1 = players.find(p => p.id == player1Id);
-                const player2 = players.find(p => p.id == player2Id);
-
-                document.getElementById('player1').innerHTML = `
-                    <img src="${player1.img}" alt="${player1.name}">
-                    <h3>${player1.name}</h3>
-                `;
-                document.getElementById('player2').innerHTML = `
-                    <img src="${player2.img}" alt="${player2.name}">
-                    <h3>${player2.name}</h3>
-                `;
-
-                currentPair = { a: player1.id, b: player2.id };
-                voteButton.disabled = false;
-            } else {
-                voteButton.disabled = true;
-            }
-        }
-
         // Голосование
         function vote(result) {
             if (!currentPair) return;
@@ -394,16 +338,15 @@
             const playerA = players.find(p => p.id == currentPair.a);
             const playerB = players.find(p => p.id == currentPair.b);
 
-            // Обновляем очки
+            // Обновляем очки (только победитель получает 3 очка)
             if (result === 1) playerA.score += 3;
             else if (result === 2) playerB.score += 3;
-            else if (result === 0) { playerA.score += 1; playerB.score += 1; }
 
             // Сохраняем историю
             const historyEntry = {
                 player1: playerA.name,
                 player2: playerB.name,
-                result: result === 0 ? "Ничья" : (result === 1 ? playerA.name : playerB.name),
+                result: result === 1 ? playerA.name : playerB.name,
                 timestamp: new Date().toLocaleString(),
                 player1Id: playerA.id,
                 player2Id: playerB.id,
@@ -416,7 +359,8 @@
 
             // Обновляем интерфейс
             updateResults();
-            updateSelectedPlayers();
+            // Показываем следующую пару
+            getRandomPair();
         }
 
         // Случайная пара
@@ -429,9 +373,16 @@
             const player2Index = Math.floor(Math.random() * availablePlayers.length);
             const player2 = availablePlayers[player2Index];
 
-            document.getElementById('selectPlayer1').value = player1.id;
-            document.getElementById('selectPlayer2').value = player2.id;
-            updateSelectedPlayers();
+            document.getElementById('player1').innerHTML = `
+                <img src="${player1.img}" alt="${player1.name}">
+                <h3>${player1.name}</h3>
+            `;
+            document.getElementById('player2').innerHTML = `
+                <img src="${player2.img}" alt="${player2.name}">
+                <h3>${player2.name}</h3>
+            `;
+
+            currentPair = { a: player1.id, b: player2.id };
         }
 
         // Обновление таблицы результатов
@@ -484,11 +435,11 @@
                 const isPlayer1 = entry.player1Id == playerId;
                 const opponent = isPlayer1 ? entry.player2 : entry.player1;
                 const result = isPlayer1 ? 
-                    (entry.resultValue == 1 ? "Победа" : (entry.resultValue == 0 ? "Ничья" : "Поражение")) :
-                    (entry.resultValue == 2 ? "Победа" : (entry.resultValue == 0 ? "Ничья" : "Поражение"));
+                    (entry.resultValue == 1 ? "Победа" : "Поражение") :
+                    (entry.resultValue == 2 ? "Победа" : "Поражение");
                 const points = isPlayer1 ? 
-                    (entry.resultValue == 1 ? 3 : (entry.resultValue == 0 ? 1 : 0)) :
-                    (entry.resultValue == 2 ? 3 : (entry.resultValue == 0 ? 1 : 0));
+                    (entry.resultValue == 1 ? 3 : 0) :
+                    (entry.resultValue == 2 ? 3 : 0);
 
                 return `
                     <tr>
@@ -516,7 +467,6 @@
         // Запуск при загрузке страницы
         window.onload = () => {
             loadData();
-            initPlayerSelectors();
             getRandomPair();
         };
     </script>
