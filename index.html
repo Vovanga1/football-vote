@@ -332,36 +332,36 @@
         }
 
         // Голосование
-        function vote(result) {
-            if (!currentPair) return;
+function vote(result) {
+    if (!currentPair) return;
 
-            const playerA = players.find(p => p.id == currentPair.a);
-            const playerB = players.find(p => p.id == currentPair.b);
+    const playerA = players.find(p => p.id == currentPair.a);
+    const playerB = players.find(p => p.id == currentPair.b);
 
-            // Обновляем очки (только победитель получает 3 очка)
-            if (result === 1) playerA.score += 3;
-            else if (result === 2) playerB.score += 3;
+    // Обновляем очки (только победитель получает 3 очка)
+    if (result === 1) playerA.score += 3;
+    else if (result === 2) playerB.score += 3;
 
-            // Сохраняем историю
-            const historyEntry = {
-                player1: playerA.name,
-                player2: playerB.name,
-                result: result === 1 ? playerA.name : playerB.name,
-                timestamp: new Date().toLocaleString(),
-                player1Id: playerA.id,
-                player2Id: playerB.id,
-                resultValue: result
-            };
+    // Сохраняем историю
+    const historyEntry = {
+        player1: playerA.name,
+        player2: playerB.name,
+        result: result === 1 ? playerA.name : playerB.name,
+        timestamp: new Date().toLocaleString(),
+        player1Id: playerA.id,
+        player2Id: playerB.id,
+        resultValue: result
+    };
 
-            // Отправляем в Firebase
-            db.ref('players').set(players);
-            db.ref('history').push(historyEntry);
+    // Отправляем в Firebase
+    db.ref('players').set(players);
+    db.ref('history').push(historyEntry);
 
-            // Обновляем интерфейс
-            updateResults();
-            // Показываем следующую пару
-            getRandomPair();
-        }
+    // Обновляем интерфейс
+    updateResults();
+    // Показываем следующую пару
+    getRandomPair();
+}
 
         // Случайная пара
         function getRandomPair() {
