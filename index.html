@@ -310,52 +310,51 @@
 
         let currentPair = null;
         let history = [];
+function loadData() {
+    db.ref('players').on('value', (snapshot) => {
+        const firebaseData = snapshot.val();
+        
+        if (!firebaseData) {
+            // Если данных нет в Firebase, инициализируем их
+            const initialData = {};
+            players.forEach(player => {
+                initialData[player.id] = player;
+            });
+            db.ref('players').set(initialData);
+            return;
+        }
 
-     function loadData() {
-        db.ref('players').on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                // Преобразуем объект Firebase в массив
-                players = Object.entries(data).map(([id, player]) => ({
-                    id: parseInt(id),
-                    name: player.name,
-                    img: player.img,
-                    score: player.score
-                }));
-                updateResults();
-                getRandomPair();
-            } else {
-                // Если данных нет, сохраняем начальный массив в Firebase
-                const playersMap = {};
-                players.forEach(player => {
-                    playersMap[player.id] = player;
-                });
-                db.ref('players').set(playersMap);
-                getRandomPair();
-            }
-        });
+        // Преобразуем данные Firebase в массив
+        players = Object.keys(firebaseData).map(key => firebaseData[key]);
+        updateResults();
+        getRandomPair();
+    });
 
-        db.ref('history').on('value', (snapshot) => {
-            const data = snapshot.val();
-            history = data ? Object.values(data) : [];
-            updateHistoryTable();
-            updatePlayerSelect();
-        });
-    }
+    db.ref('history').on('value', (snapshot) => {
+        const data = snapshot.val();
+        history = data ? Object.values(data) : [];
+        updateHistoryTable();
+        updatePlayerSelect();
+    });
+}
 
         // Голосование
 function vote(result) {
-    if (!currentPair || !players || typeof players !== 'object') {
-        console.error('Invalid data:', { currentPair, players });
+    if (!currentPair) {
+        console.error('Current pair not set');
         return;
     }
 
-    // Находим игроков в объекте (не в массиве)
-    const playerA = players[currentPair.a];
-    const playerB = players[currentPair.b];
+    // Находим игроков в массиве
+    const playerA = players.find(p => p.id === currentPair.a);
+    const playerB = players.find(p => p.id === currentPair.b);
     
     if (!playerA || !playerB) {
-        console.error('Players not found:', { playerA, playerB });
+        console.error('Players not found:', { 
+            playerAId: currentPair.a, 
+            playerBId: currentPair.b,
+            availablePlayers: players.map(p => p.id)
+        });
         return;
     }
 
@@ -363,7 +362,12 @@ function vote(result) {
     if (result === 1) playerA.score += 3;
     else if (result === 2) playerB.score += 3;
 
-    // Сохраняем историю
+    // Подготовка обновления для Firebase
+    const updates = {};
+    updates[`players/${playerA.id}/score`] = playerA.score;
+    updates[`players/${playerB.id}/score`] = playerB.score;
+
+    // История голосования
     const historyEntry = {
         player1: playerA.name,
         player2: playerB.name,
@@ -373,6 +377,14 @@ function vote(result) {
         player2Id: playerB.id,
         resultValue: result
     };
+
+    // Сохраняем изменения
+    db.ref().update(updates);
+    db.ref('history').push(historyEntry);
+
+    updateResults();
+    getRandomPair();
+}
 
     // Обновляем данные в Firebase
     const updates = {};
@@ -387,21 +399,22 @@ function vote(result) {
 }
 
 function getRandomPair() {
-    const playerIds = Object.keys(players);
-    if (playerIds.length < 2) {
-        console.error('Not enough players');
+    if (!players || players.length < 2) {
+        console.error('Not enough players available');
         return;
     }
 
-    const randomIndex1 = Math.floor(Math.random() * playerIds.length);
-    let randomIndex2;
+    const player1Index = Math.floor(Math.random() * players.length);
+    let player2Index;
+    
     do {
-        randomIndex2 = Math.floor(Math.random() * playerIds.length);
-    } while (randomIndex2 === randomIndex1);
+        player2Index = Math.floor(Math.random() * players.length);
+    } while (player2Index === player1Index);
 
-    const player1 = players[playerIds[randomIndex1]];
-    const player2 = players[playerIds[randomIndex2]];
+    const player1 = players[player1Index];
+    const player2 = players[player2Index];
 
+    // Обновляем отображение
     document.getElementById('player1').innerHTML = `
         <img src="${player1.img}" alt="${player1.name}">
         <h3>${player1.name}</h3>
