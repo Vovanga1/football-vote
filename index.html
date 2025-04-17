@@ -147,7 +147,18 @@
     </div>
 
     <!-- Вкладка голосования -->
-
+    <div id="voting" class="tab-content active">
+        <div class="player-container">
+        <div class="player" id="player1" onclick="vote(1)">
+            <img src="" alt="" id="player1-img">
+            <h3 id="player1-name">Загрузка...</h3>
+        </div>
+        <span class="vs-text">vs</span>
+        <div class="player" id="player2" onclick="vote(2)">
+            <img src="" alt="" id="player2-img">
+            <h3 id="player2-name">Загрузка...</h3>
+        </div>
+    </div>
         <div class="buttons">
             <button onclick="getRandomPair()">Следующая пара</button>
         </div>
