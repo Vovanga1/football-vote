@@ -1,49 +1,108 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Голосование за футболистов</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <title>Голосование за лучшего футболиста</title>
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-database-compat.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .players {
+            display: flex;
+            justify-content: space-around;
+            margin: 40px 0;
+        }
+        .player {
+            border: 2px solid #ccc;
+            padding: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+            text-align: center;
+        }
+        .player:hover {
+            border-color: #00FF00;
+        }
+        .player img {
+            width: 400px;
+            height: auto;
+            border-radius: 10px;
+        }
+        .buttons {
+            text-align: center;
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            cursor: pointer;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #006400;
+            color: white;
+        }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-start p-6">
-  <h1 class="text-3xl font-bold mb-6">Кто лучший футболист?</h1>
-
-  <div id="vote-container" class="flex flex-col items-center gap-4">
-    <div class="flex gap-10">
-      <div id="player1" class="flex flex-col items-center"></div>
-      <div id="player2" class="flex flex-col items-center"></div>
+<body>
+    <h1>Кто лучший футболист?</h1>
+    <div class="players">
+        <div class="player" id="player1" onclick="vote(1)">
+            <img src="players/Андрей Аршавин.jpg" alt="Андрей Аршавин">
+            <h3>Андрей Аршавин</h3>
+        </div>
+        <div class="player" id="player2" onclick="vote(2)">
+            <img src="players/Игорь Акинфеев.jpg" alt="Игорь Акинфеев">
+            <h3>Игорь Акинфеев</h3>
+        </div>
     </div>
-    <button onclick="vote(null)" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Ничья</button>
-  </div>
-
-  <div class="mt-10">
-    <button onclick="toggleResults()" class="bg-blue-600 hover:bg-blue-800 text-white py-2 px-4 rounded">Показать результаты</button>
-  </div>
-
-  <div id="results-container" class="hidden mt-6 w-full max-w-xl">
-    <h2 class="text-2xl font-semibold mb-4">Результаты голосования</h2>
-    <table class="min-w-full bg-white border border-gray-300">
-      <thead>
-        <tr>
-          <th class="py-2 px-4 border-b">Футболист</th>
-          <th class="py-2 px-4 border-b">Голоса</th>
-        </tr>
-      </thead>
-      <tbody id="results-table"></tbody>
+    <div class="buttons">
+        <button onclick="vote(0)">Ничья</button>
+    </div>
+    <h2>Таблица результатов</h2>
+    <table id="results">
+        <thead>
+            <tr>
+                <th>Игрок</th>
+                <th>Очки</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
     </table>
-  </div>
-  <div class="dropdown">
-  <button onclick="toggleList()">Выбрать игрока</button>
-  <div id="dropdown-list" class="hidden">
-    <div onclick="selectPlayer('Игрок 1')">Игрок 1</div>
-    <div onclick="selectPlayer('Игрок 2')">Игрок 2</div>
-    <div onclick="selectPlayer('Игрок 3')">Игрок 3</div>
-  </div>
-  </div>
 
-  <script>
-    const players = [
+    <script>
+        // 🔧 Твоя конфигурация Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAd2i30miJYAXo0_TreJaBRM2UCiY4B8ds",
+            authDomain: "footballvoting-e69aa.firebaseapp.com",
+            databaseURL: "https://footballvoting-e69aa-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "footballvoting-e69aa",
+            storageBucket: "footballvoting-e69aa.appspot.com",
+            messagingSenderId: "863877355837",
+            appId: "1:863877355837:web:0b6f57698eab53ca8d8d54"
+        };
+
+        // ⚙️ Инициализация Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let players = [
             { id: 1, name: 'Андрей Аршавин', img: 'players/Андрей Аршавин.jpg', score: 0 },
 	    { id: 2, name: 'Игорь Акинфеев', img: 'players/Игорь Акинфеев.jpg', score: 0 },
 	    { id: 3, name: 'Юрий Жирков', img: 'players/Юрий Жирков.jpg', score: 0 },
@@ -144,135 +203,91 @@
 	    { id: 98, name: 'Александр Точилин', img: 'players/Александр Точилин.jpg', score: 0 },
 	    { id: 99, name: 'Дмитрий Бородин', img: 'players/Дмитрий Бородин.jpg', score: 0 },
 	    { id: 100, name: 'Георгий Джикия', img: 'players/Георгий Джикия.jpg', score: 0 },
-    ];
+        ];
 
-    let player1, player2;
+        let usedPairs = JSON.parse(localStorage.getItem('usedPairs')) || {};
+        let currentPair = null;
 
-    // Загружаем результаты из localStorage
-    function loadScores() {
-      const saved = localStorage.getItem('football_votes');
-      if (saved) {
-        const savedScores = JSON.parse(saved);
-        players.forEach(p => {
-          const match = savedScores.find(s => s.id === p.id);
-          if (match) p.score = match.score;
-        });
-      }
-    }
+        function getRandomPair() {
+            const availablePlayers = [...players];
 
-    function saveScores() {
-      localStorage.setItem('football_votes', JSON.stringify(players));
-    }
+            if (Object.keys(usedPairs).length >= players.length * (players.length - 1) / 2) {
+                alert('Все возможные пары были показаны!');
+                return;
+            }
 
-    function getTwoRandomPlayers() {
-      let shuffled = players.sort(() => 0.5 - Math.random());
-      return [shuffled[0], shuffled[1]];
-    }
+            const aIndex = Math.floor(Math.random() * availablePlayers.length);
+            const a = availablePlayers[aIndex].id;
+            availablePlayers.splice(aIndex, 1);
 
-    function renderPlayers() {
-      [player1, player2] = getTwoRandomPlayers();
-      const p1 = document.getElementById('player1');
-      const p2 = document.getElementById('player2');
-      p1.innerHTML = `
-        <img src="${player1.img}" class="w-40 h-40 object-cover rounded mb-2" />
-        <p class="text-xl font-semibold">${player1.name}</p>
-        <button onclick="vote(${player1.id})" class="mt-2 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Голосовать</button>
-      `;
-      p2.innerHTML = `
-        <img src="${player2.img}" class="w-40 h-40 object-cover rounded mb-2" />
-        <p class="text-xl font-semibold">${player2.name}</p>
-        <button onclick="vote(${player2.id})" class="mt-2 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Голосовать</button>
-      `;
-    }
+            const availableForB = availablePlayers.filter(p =>
+                !usedPairs[`${a}-${p.id}`] && !usedPairs[`${p.id}-${a}`]
+            );
 
-    function vote(id) {
-  if (id !== null) {
-    const votedPlayer = players.find(p => p.id === id);
-    if (votedPlayer) {
-      votedPlayer.score += 3;
-    }
-  } else {
-    // Ничья — по 1 очку каждому
-    const p1 = players.find(p => p.id === player1.id);
-    const p2 = players.find(p => p.id === player2.id);
-    if (p1) p1.score += 3;
-    if (p2) p2.score += 3;
-  }
-  saveScores();
-  renderPlayers();
-}
+            if (availableForB.length === 0) {
+                getRandomPair();
+                return;
+            }
 
-    loadScores();
-    renderPlayers();
-  </script>
-  <script>
-  let currentPair = [];
+            const bIndex = Math.floor(Math.random() * availableForB.length);
+            const b = availableForB[bIndex].id;
 
-  function getRandomPlayers() {
-    const indexes = [];
-    while (indexes.length < 2) {
-      const index = Math.floor(Math.random() * players.length);
-      if (!indexes.includes(index)) {
-        indexes.push(index);
-      }
-    }
-    return [players[indexes[0]], players[indexes[1]]];
-  }
+            currentPair = { a, b };
+            usedPairs[`${a}-${b}`] = true;
+            localStorage.setItem('usedPairs', JSON.stringify(usedPairs));
 
-  function renderPlayers() {
-    const [p1, p2] = getRandomPlayers();
-    currentPair = [p1, p2];
+            const playerA = players.find(p => p.id === a);
+            const playerB = players.find(p => p.id === b);
 
-    const container1 = document.getElementById('player1');
-    const container2 = document.getElementById('player2');
+            document.getElementById('player1').innerHTML = `
+                <img src="${playerA.img}" alt="${playerA.name}"><br>
+                <strong>${playerA.name}</strong>
+            `;
+            document.getElementById('player2').innerHTML = `
+                <img src="${playerB.img}" alt="${playerB.name}"><br>
+                <strong>${playerB.name}</strong>
+            `;
+        }
 
-    container1.innerHTML = `
-      <img src="${p1.img}" alt="${p1.name}" class="w-40 h-40 object-cover rounded-lg mb-2" />
-      <p class="font-semibold">${p1.name}</p>
-      <button onclick="vote(${p1.id})" class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-3 mt-2 rounded">Голосовать</button>
-    `;
+        function vote(result) {
+            if (!currentPair) return;
 
-    container2.innerHTML = `
-      <img src="${p2.img}" alt="${p2.name}" class="w-40 h-40 object-cover rounded-lg mb-2" />
-      <p class="font-semibold">${p2.name}</p>
-      <button onclick="vote(${p2.id})" class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-3 mt-2 rounded">Голосовать</button>
-    `;
-  }
+            const playerA = players.find(p => p.id === currentPair.a);
+            const playerB = players.find(p => p.id === currentPair.b);
 
-  function vote(playerId) {
-  if (playerId !== null) {
-    const votedPlayer = players.find(p => p.id === playerId);
-    if (votedPlayer) votedPlayer.score += 3;
-  }
+            switch(result) {
+                case 1:
+                    playerA.score += 3;
+                    break;
+                case 2:
+                    playerB.score += 3;
+                    break;
+                case 0:
+                    playerA.score += 1;
+                    playerB.score += 1;
+                    break;
+            }
 
-  renderPlayers();
+            localStorage.setItem('players', JSON.stringify(players));
+            updateResults();
+            getRandomPair();
+        }
 
-  // Если окно с результатами открыто — обновим его
-  const resultsContainer = document.getElementById('results-container');
-  if (!resultsContainer.classList.contains('hidden')) {
-    updateResultsTable();
-  }
-}
-  function updateResultsTable() {
-  const resultsTable = document.getElementById('results-table');
-  resultsTable.innerHTML = '';
+        function updateResults() {
+            const sorted = [...players].sort((a, b) => b.score - a.score);
+            const tbody = document.querySelector('#results tbody');
+            tbody.innerHTML = sorted.map(p => `
+                <tr>
+                    <td>${p.name}</td>
+                    <td>${p.score}</td>
+                </tr>
+            `).join('');
+        }
 
-  const sorted = [...players].sort((a, b) => b.score - a.score);
-  for (const player of sorted) {
-    if (player.score > 0) {
-      resultsTable.innerHTML += `
-        <tr>
-          <td class="py-2 px-4 border-b">${player.name}</td>
-          <td class="py-2 px-4 border-b">${player.score}</td>
-        </tr>
-      `;
-    }
-  }
-}
-
-  // Начальная отрисовка
-  renderPlayers();
-</script>
-
+        window.onload = () => {
+            getRandomPair();
+            updateResults();
+        };
+    </script>
 </body>
 </html>
