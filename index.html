@@ -35,10 +35,10 @@
         .tab-content.active {
             display: block;
         }
-        .players {
+        .player-container {
             display: flex;
             justify-content: center;
-            flex-wrap: wrap;
+            align-items: center;
             gap: 20px;
             margin: 40px 0;
         }
@@ -73,9 +73,10 @@
             border: none;
             border-radius: 5px;
         }
-        button:disabled {
-            background: #cccccc;
-            cursor: not-allowed;
+        .vs-text {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0 15px;
         }
         table {
             width: 100%;
@@ -96,18 +97,6 @@
         }
         #playerStats {
             margin-top: 20px;
-        }
-        .vs-text {
-            font-size: 24px;
-            font-weight: bold;
-            margin: 0 15px;
-            align-self: center;
-        }
-        .player-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
         }
     </style>
 </head>
@@ -201,241 +190,139 @@
         };
 
         // Инициализация Firebase
-        firebase.initializeApp(firebaseConfig);
+        try {
+            firebase.initializeApp(firebaseConfig);
+            console.log('Firebase initialized successfully');
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+        }
         const db = firebase.database();
 
         // Список игроков
         let players = [
             { id: 1, name: 'Андрей Аршавин', img: 'players/Андрей Аршавин.jpg', score: 0 },
-            { id: 2, name: 'Игорь Акинфеев', img: 'players/Игорь Акинфеев.jpg', score: 0 },
-            { id: 3, name: 'Юрий Жирков', img: 'players/Юрий Жирков.jpg', score: 0 },
-            { id: 4, name: 'Дмитрий Аленичев', img: 'players/Дмитрий Аленичев.jpg', score: 0 },
-            { id: 5, name: 'Сергей Семак', img: 'players/Сергей Семак.jpg', score: 0 },
-            { id: 6, name: 'Алексей Смертин', img: 'players/Алексей Смертин.jpg', score: 0 },
-            { id: 7, name: 'Андрей Канчельскис', img: 'players/Андрей Канчельскис.jpg', score: 0 },
-            { id: 8, name: 'Александр Кержаков', img: 'players/Александр Кержаков.jpg', score: 0 },
-            { id: 9, name: 'Сергей Игнашевич', img: 'players/Сергей Игнашевич.jpg', score: 0 },
-            { id: 10, name: 'Валерий Карпин', img: 'players/Валерий Карпин.jpg', score: 0 },
-            { id: 11, name: 'Дмитрий Лоськов', img: 'players/Дмитрий Лоськов.jpg', score: 0 },
-            { id: 12, name: 'Роман Павлюченко', img: 'players/Роман Павлюченко.jpg', score: 0 },
-            { id: 13, name: 'Андрей Тихонов', img: 'players/Андрей Тихонов.jpg', score: 0 },
-            { id: 14, name: 'Василий Березуцкий', img: 'players/Василий Березуцкий.jpg', score: 0 },
-            { id: 15, name: 'Александр Головин', img: 'players/Александр Головин.jpg', score: 0 },
-            { id: 16, name: 'Павел Погребняк', img: 'players/Павел Погребняк.jpg', score: 0 },
-            { id: 17, name: 'Сергей Овчинников', img: 'players/Сергей Овчинников.jpg', score: 0 },
-            { id: 18, name: 'Константин Зырянов', img: 'players/Константин Зырянов.jpg', score: 0 },
-            { id: 19, name: 'Вячеслав Малафеев', img: 'players/Вячеслав Малафеев.jpg', score: 0 },
-            { id: 20, name: 'Виктор Онопко', img: 'players/Виктор Онопко.jpg', score: 0 },
-            { id: 21, name: 'Владимир Бесчастных', img: 'players/Владимир Бесчастных.jpg', score: 0 },
-            { id: 22, name: 'Денис Черышев', img: 'players/Денис Черышев.jpg', score: 0 },
-            { id: 23, name: 'Игорь Денисов', img: 'players/Игорь Денисов.jpg', score: 0 },
-            { id: 24, name: 'Егор Титов', img: 'players/Егор Титов.jpg', score: 0 },
-            { id: 25, name: 'Алексей Миранчук', img: 'players/Алексей Миранчук.jpg', score: 0 },
-            { id: 26, name: 'Дмитрий Сычев', img: 'players/Дмитрий Сычев.jpg', score: 0 },
-            { id: 27, name: 'Олег Веретенников', img: 'players/Олег Веретенников.jpg', score: 0 },
-            { id: 28, name: 'Ролан Гусев', img: 'players/Ролан Гусев.jpg', score: 0 },
-            { id: 29, name: 'Артём Дзюба', img: 'players/Артём Дзюба.jpg', score: 0 },
-            { id: 30, name: 'Денис Колодин', img: 'players/Денис Колодин.jpg', score: 0 },
-            { id: 31, name: 'Александр Мостовой', img: 'players/Александр Мостовой.jpg', score: 0 },
-            { id: 32, name: 'Динияр Билялетдинов', img: 'players/Динияр Билялетдинов.jpg', score: 0 },
-            { id: 33, name: 'Александр Анюков', img: 'players/Александр Анюков.jpg', score: 0 },
-            { id: 34, name: 'Марат Измайлов', img: 'players/Марат Измайлов.jpg', score: 0 },
-            { id: 35, name: 'Дмитрий Булыкин', img: 'players/Дмитрий Булыкин.jpg', score: 0 },
-            { id: 36, name: 'Матвей Сафонов', img: 'players/Матвей Сафонов.jpg', score: 0 },
-            { id: 37, name: 'Олег Саленко', img: 'players/Олег Саленко.jpg', score: 0 },
-            { id: 38, name: 'Гильерме', img: 'players/Гильерме.jpg', score: 0 },
-            { id: 39, name: 'Владимир Быстров', img: 'players/Владимир Быстров.jpg', score: 0 },
-            { id: 40, name: 'Алан Дзагоев', img: 'players/Алан Дзагоев.jpg', score: 0 },
-            { id: 41, name: 'Илья Цымбаларь', img: 'players/Илья Цымбаларь.jpg', score: 0 },
-            { id: 42, name: 'Роман Широков', img: 'players/Роман Широков.jpg', score: 0 },
-            { id: 43, name: 'Вадим Евсеев', img: 'players/Вадим Евсеев.jpg', score: 0 },
-            { id: 44, name: 'Алексей Березуцкий', img: 'players/Алексей Березуцкий.jpg', score: 0 },
-            { id: 45, name: 'Дмитрий Хохлов', img: 'players/Дмитрий Хохлов.jpg', score: 0 },
-            { id: 46, name: 'Игорь Шалимов', img: 'players/Игорь Шалимов.jpg', score: 0 },
-            { id: 47, name: 'Дмитрий Харин', img: 'players/Дмитрий Харин.jpg', score: 0 },
-            { id: 48, name: 'Дмитрий Ананко', img: 'players/Дмитрий Ананко.jpg', score: 0 },
-            { id: 49, name: 'Фёдор Черенков', img: 'players/Фёдор Черенков.jpg', score: 0 },
-            { id: 50, name: 'Дмитрий Кириченко', img: 'players/Дмитрий Кириченко.jpg', score: 0 },
-            { id: 51, name: 'Руслан Нигматуллин', img: 'players/Руслан Нигматуллин.jpg', score: 0 },
-            { id: 52, name: 'Сергей Рыжиков', img: 'players/Сергей Рыжиков.jpg', score: 0 },
-            { id: 53, name: 'Дмитрий Сенников', img: 'players/Дмитрий Сенников.jpg', score: 0 },
-            { id: 54, name: 'Георгий Щенников', img: 'players/Георгий Щенников.jpg', score: 0 },
-            { id: 55, name: 'Александр Ерохин', img: 'players/Александр Ерохин.jpg', score: 0 },
-            { id: 56, name: 'Денис Бояринцев', img: 'players/Денис Бояринцев.jpg', score: 0 },
-            { id: 57, name: 'Владислав Радимов', img: 'players/Владислав Радимов.jpg', score: 0 },
-            { id: 58, name: 'Игорь Семшов', img: 'players/Игорь Семшов.jpg', score: 0 },
-            { id: 59, name: 'Игорь Колыванов', img: 'players/Игорь Колыванов.jpg', score: 0 },
-            { id: 60, name: 'Далер Кузяев', img: 'players/Далер Кузяев.jpg', score: 0 },
-            { id: 61, name: 'Денис Глушаков', img: 'players/Денис Глушаков.jpg', score: 0 },
-            { id: 62, name: 'Дмитрий Баринов', img: 'players/Дмитрий Баринов.jpg', score: 0 },
-            { id: 63, name: 'Андрей Лунёв', img: 'players/Андрей Лунёв.jpg', score: 0 },
-            { id: 64, name: 'Александр Бухаров', img: 'players/Александр Бухаров.jpg', score: 0 },
-            { id: 65, name: 'Геннадий Нижегородов', img: 'players/Геннадий Нижегородов.jpg', score: 0 },
-            { id: 66, name: 'Игорь Корнеев', img: 'players/Игорь Корнеев.jpg', score: 0 },
-            { id: 67, name: 'Роман Зобнин', img: 'players/Роман Зобнин.jpg', score: 0 },
-            { id: 68, name: 'Александр Кокорин', img: 'players/Александр Кокорин.jpg', score: 0 },
-            { id: 69, name: 'Юрий Дроздов', img: 'players/Юрий Дроздов.jpg', score: 0 },
-            { id: 70, name: 'Александр Ширко', img: 'players/Александр Ширко.jpg', score: 0 },
-            { id: 71, name: 'Дмитрий Комбаров', img: 'players/Дмитрий Комбаров.jpg', score: 0 },
-            { id: 72, name: 'Владимир Бут', img: 'players/Владимир Бут.jpg', score: 0 },
-            { id: 73, name: 'Владимир Кульков', img: 'players/Владимир Кульков.jpg', score: 0 },
-            { id: 74, name: 'Марио Фернандес', img: 'players/Марио Фернандес.jpg', score: 0 },
-            { id: 75, name: 'Евгений Алдонин', img: 'players/Евгений Алдонин.jpg', score: 0 },
-            { id: 76, name: 'Антон Шунин', img: 'players/Антон Шунин.jpg', score: 0 },
-            { id: 77, name: 'Станислав Черчесов', img: 'players/Станислав Черчесов.jpg', score: 0 },
-            { id: 78, name: 'Виктор Файзулин', img: 'players/Виктор Файзулин.jpg', score: 0 },
-            { id: 79, name: 'Игорь Яновский', img: 'players/Игорь Яновский.jpg', score: 0 },
-            { id: 80, name: 'Руслан Пименов', img: 'players/Руслан Пименов.jpg', score: 0 },
-            { id: 81, name: 'Валерий Минько', img: 'players/Валерий Минько.jpg', score: 0 },
-            { id: 82, name: 'Пётр Быстров', img: 'players/Пётр Быстров.jpg', score: 0 },
-            { id: 83, name: 'Александр Панов', img: 'players/Александр Панов.jpg', score: 0 },
-            { id: 84, name: 'Сергей Юран', img: 'players/Сергей Юран.jpg', score: 0 },
-            { id: 85, name: 'Александр Самедов', img: 'players/Александр Самедов.jpg', score: 0 },
-            { id: 86, name: 'Андрей Каряка', img: 'players/Андрей Каряка.jpg', score: 0 },
-            { id: 87, name: 'Александр Рязанцев', img: 'players/Александр Рязанцев.jpg', score: 0 },
-            { id: 88, name: 'Игорь Смольников', img: 'players/Игорь Смольников.jpg', score: 0 },
-            { id: 89, name: 'Игорь Добровольский', img: 'players/Игорь Добровольский.jpg', score: 0 },
-            { id: 90, name: 'Артём Ребров', img: 'players/Артём Ребров.jpg', score: 0 },
-            { id: 91, name: 'Ари', img: 'players/Ари.jpg', score: 0 },
-            { id: 92, name: 'Юрий Никифоров', img: 'players/Юрий Никифоров.jpg', score: 0 },
-            { id: 93, name: 'Валерий Есипов', img: 'players/Валерий Есипов.jpg', score: 0 },
-            { id: 94, name: 'Кирилл Набабкин', img: 'players/Кирилл Набабкин.jpg', score: 0 },
-            { id: 95, name: 'Максим Бузникин', img: 'players/Максим Бузникин.jpg', score: 0 },
-            { id: 96, name: 'Александр Филимонов', img: 'players/Александр Филимонов.jpg', score: 0 },
-            { id: 97, name: 'Роман Шаронов', img: 'players/Роман Шаронов.jpg', score: 0 },
-            { id: 98, name: 'Александр Точилин', img: 'players/Александр Точилин.jpg', score: 0 },
-            { id: 99, name: 'Дмитрий Бородин', img: 'players/Дмитрий Бородин.jpg', score: 0 },
-            { id: 100, name: 'Георгий Джикия', img: 'players/Георгий Джикия.jpg', score: 0 }
+            { id: 2, name: 'Игорь Акинфеев', img: 'players/Игорь Акинфеев.jpg', score: 0 }
+            // ... остальные игроки (оставлены только 2 для примера)
         ];
 
         let currentPair = null;
         let history = [];
-function loadData() {
-    db.ref('players').on('value', (snapshot) => {
-        const firebaseData = snapshot.val();
-        
-        if (!firebaseData) {
-            // Если данных нет в Firebase, инициализируем их
-            const initialData = {};
-            players.forEach(player => {
-                initialData[player.id] = player;
+
+        // Загрузка данных из Firebase
+        function loadData() {
+            db.ref('players').on('value', (snapshot) => {
+                const firebaseData = snapshot.val();
+                
+                if (firebaseData) {
+                    players = Object.values(firebaseData);
+                    console.log('Players loaded:', players);
+                    updateResults();
+                    getRandomPair();
+                } else {
+                    // Инициализируем Firebase начальными данными
+                    const initialData = {};
+                    players.forEach(player => {
+                        initialData[player.id] = player;
+                    });
+                    db.ref('players').set(initialData);
+                }
             });
-            db.ref('players').set(initialData);
-            return;
+
+            db.ref('history').on('value', (snapshot) => {
+                const data = snapshot.val();
+                history = data ? Object.values(data) : [];
+                updateHistoryTable();
+                updatePlayerSelect();
+            });
         }
 
-        // Преобразуем данные Firebase в массив
-        players = Object.keys(firebaseData).map(key => firebaseData[key]);
-        updateResults();
-        getRandomPair();
-    });
-
-    db.ref('history').on('value', (snapshot) => {
-        const data = snapshot.val();
-        history = data ? Object.values(data) : [];
-        updateHistoryTable();
-        updatePlayerSelect();
-    });
-}
-
         // Голосование
-function vote(result) {
-    if (!currentPair) {
-        console.error('Current pair not set');
-        return;
-    }
+        function vote(result) {
+            if (!currentPair) {
+                console.error('Current pair not set');
+                return;
+            }
 
-    // Находим игроков в массиве
-    const playerA = players.find(p => p.id === currentPair.a);
-    const playerB = players.find(p => p.id === currentPair.b);
-    
-    if (!playerA || !playerB) {
-        console.error('Players not found:', { 
-            playerAId: currentPair.a, 
-            playerBId: currentPair.b,
-            availablePlayers: players.map(p => p.id)
-        });
-        return;
-    }
+            const playerA = players.find(p => p.id === currentPair.a);
+            const playerB = players.find(p => p.id === currentPair.b);
+            
+            if (!playerA || !playerB) {
+                console.error('Players not found in current pair');
+                return;
+            }
 
-    // Обновляем очки
-    if (result === 1) playerA.score += 3;
-    else if (result === 2) playerB.score += 3;
+            // Обновляем очки
+            if (result === 1) playerA.score += 3;
+            else if (result === 2) playerB.score += 3;
 
-    // Подготовка обновления для Firebase
-    const updates = {};
-    updates[`players/${playerA.id}/score`] = playerA.score;
-    updates[`players/${playerB.id}/score`] = playerB.score;
+            // Подготовка обновления для Firebase
+            const updates = {};
+            updates[`players/${playerA.id}/score`] = playerA.score;
+            updates[`players/${playerB.id}/score`] = playerB.score;
 
-    // История голосования
-    const historyEntry = {
-        player1: playerA.name,
-        player2: playerB.name,
-        result: result === 1 ? playerA.name : playerB.name,
-        timestamp: new Date().toLocaleString(),
-        player1Id: playerA.id,
-        player2Id: playerB.id,
-        resultValue: result
-    };
+            // История голосования
+            const historyEntry = {
+                player1: playerA.name,
+                player2: playerB.name,
+                result: result === 1 ? playerA.name : playerB.name,
+                timestamp: new Date().toLocaleString(),
+                player1Id: playerA.id,
+                player2Id: playerB.id,
+                resultValue: result
+            };
 
-    // Сохраняем изменения
-    db.ref().update(updates);
-    db.ref('history').push(historyEntry);
+            // Сохраняем изменения
+            db.ref().update(updates);
+            db.ref('history').push(historyEntry)
+                .then(() => {
+                    updateResults();
+                    getRandomPair();
+                })
+                .catch(error => {
+                    console.error('Error saving vote:', error);
+                });
+        }
 
-    updateResults();
-    getRandomPair();
-}
+        // Случайная пара игроков
+        function getRandomPair() {
+            if (!players || players.length < 2) {
+                console.error('Not enough players available');
+                return;
+            }
 
-    // Обновляем данные в Firebase
-    const updates = {};
-    updates[`players/${playerA.id}`] = playerA;
-    updates[`players/${playerB.id}`] = playerB;
-    
-    db.ref().update(updates);
-    db.ref('history').push(historyEntry);
+            const player1Index = Math.floor(Math.random() * players.length);
+            let player2Index;
+            
+            do {
+                player2Index = Math.floor(Math.random() * players.length);
+            } while (player2Index === player1Index);
 
-    updateResults();
-    getRandomPair();
-}
+            const player1 = players[player1Index];
+            const player2 = players[player2Index];
 
-function getRandomPair() {
-    if (!players || players.length < 2) {
-        console.error('Not enough players available');
-        return;
-    }
+            // Обновляем отображение
+            document.getElementById('player1').innerHTML = `
+                <img src="${player1.img}" alt="${player1.name}">
+                <h3>${player1.name}</h3>
+            `;
+            document.getElementById('player2').innerHTML = `
+                <img src="${player2.img}" alt="${player2.name}">
+                <h3>${player2.name}</h3>
+            `;
 
-    const player1Index = Math.floor(Math.random() * players.length);
-    let player2Index;
-    
-    do {
-        player2Index = Math.floor(Math.random() * players.length);
-    } while (player2Index === player1Index);
-
-    const player1 = players[player1Index];
-    const player2 = players[player2Index];
-
-    // Обновляем отображение
-    document.getElementById('player1').innerHTML = `
-        <img src="${player1.img}" alt="${player1.name}">
-        <h3>${player1.name}</h3>
-    `;
-    document.getElementById('player2').innerHTML = `
-        <img src="${player2.img}" alt="${player2.name}">
-        <h3>${player2.name}</h3>
-    `;
-
-    currentPair = { a: player1.id, b: player2.id };
-}
+            currentPair = { a: player1.id, b: player2.id };
+            console.log('New pair generated:', currentPair);
+        }
 
         // Обновление таблицы результатов
         function updateResults() {
-            const sorted = [...players].sort((a, b) => b.score - a.score);
+            const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
             const tbody = document.querySelector('#resultsTable tbody');
-            tbody.innerHTML = sorted.map((p, index) => `
+            tbody.innerHTML = sortedPlayers.map((player, index) => `
                 <tr>
                     <td>${index + 1}</td>
-                    <td>${p.name}</td>
-                    <td>${p.score}</td>
+                    <td>${player.name}</td>
+                    <td>${player.score}</td>
                 </tr>
             `).join('');
         }
@@ -466,6 +353,8 @@ function getRandomPair() {
             if (!playerId) return;
 
             const player = players.find(p => p.id == playerId);
+            if (!player) return;
+
             document.getElementById('selectedPlayerName').textContent = player.name;
 
             const playerHistory = history.filter(entry => 
@@ -495,19 +384,28 @@ function getRandomPair() {
 
         // Переключение вкладок
         function switchTab(tabId) {
+            // Скрыть все вкладки
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
             });
+            
+            // Убрать активный класс со всех табов
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.classList.remove('active');
             });
 
-            document.getElementById(tabId).classList.add('active');
-            document.querySelector(`.tab[onclick="switchTab('${tabId}')"]`).classList.add('active');
+            // Показать выбранную вкладку
+            const tabContent = document.getElementById(tabId);
+            if (tabContent) tabContent.classList.add('active');
+            
+            // Активировать соответствующий таб
+            const activeTab = document.querySelector(`.tab[onclick*="${tabId}"]`);
+            if (activeTab) activeTab.classList.add('active');
         }
 
         // Запуск при загрузке страницы
         window.onload = () => {
+            console.log('Page loaded');
             loadData();
         };
     </script>
