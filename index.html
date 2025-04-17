@@ -197,5 +197,75 @@
     loadScores();
     renderPlayers();
   </script>
+  <script>
+  let currentPair = [];
+
+  function getRandomPlayers() {
+    const indexes = [];
+    while (indexes.length < 2) {
+      const index = Math.floor(Math.random() * players.length);
+      if (!indexes.includes(index)) {
+        indexes.push(index);
+      }
+    }
+    return [players[indexes[0]], players[indexes[1]]];
+  }
+
+  function renderPlayers() {
+    const [p1, p2] = getRandomPlayers();
+    currentPair = [p1, p2];
+
+    const container1 = document.getElementById('player1');
+    const container2 = document.getElementById('player2');
+
+    container1.innerHTML = `
+      <img src="${p1.img}" alt="${p1.name}" class="w-40 h-40 object-cover rounded-lg mb-2" />
+      <p class="font-semibold">${p1.name}</p>
+      <button onclick="vote(${p1.id})" class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-3 mt-2 rounded">Голосовать</button>
+    `;
+
+    container2.innerHTML = `
+      <img src="${p2.img}" alt="${p2.name}" class="w-40 h-40 object-cover rounded-lg mb-2" />
+      <p class="font-semibold">${p2.name}</p>
+      <button onclick="vote(${p2.id})" class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-3 mt-2 rounded">Голосовать</button>
+    `;
+  }
+
+  function vote(playerId) {
+    if (playerId !== null) {
+      const votedPlayer = players.find(p => p.id === playerId);
+      if (votedPlayer) votedPlayer.score++;
+    }
+    renderPlayers();
+  }
+
+  function toggleResults() {
+    const resultsContainer = document.getElementById('results-container');
+    const resultsTable = document.getElementById('results-table');
+
+    if (resultsContainer.classList.contains('hidden')) {
+      resultsContainer.classList.remove('hidden');
+      resultsTable.innerHTML = '';
+
+      const sorted = [...players].sort((a, b) => b.score - a.score);
+      for (const player of sorted) {
+        if (player.score > 0) {
+          resultsTable.innerHTML += `
+            <tr>
+              <td class="py-2 px-4 border-b">${player.name}</td>
+              <td class="py-2 px-4 border-b">${player.score}</td>
+            </tr>
+          `;
+        }
+      }
+    } else {
+      resultsContainer.classList.add('hidden');
+    }
+  }
+
+  // Начальная отрисовка
+  renderPlayers();
+</script>
+
 </body>
 </html>
