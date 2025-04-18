@@ -364,11 +364,11 @@
             db.ref('players').once('value').then(snapshot => {
                 const data = snapshot.val();
                 if (data && Object.keys(data).length === 100) {
-                    players = Object.values(data).map(p => ({
-                        id: Number(p.id),
+                    players = Object.values(data).map(key => ({
+                        id: Number(key),
                         name: p.name,
-                        img: p.img,
-                        score: Number(p.score) || 0
+                        img: data[key].name,
+                        score: Number(data[key].score) || 0
                     }));
                     console.log('Загружено игроков:', players.length);
                 } else {
@@ -377,10 +377,10 @@
                         return db.ref('players').once('value');
                     }).then(snapshot => {
                         players = Object.values(snapshot.val()).map(p => ({
-                            id: Number(p.id),
+                            id: Number(key),
                             name: p.name,
-                            img: p.img,
-                            score: Number(p.score) || 0
+                            img: data[key].name,
+                            score: Number(data[key].score) || 0
                         }));
                     });
                 }
