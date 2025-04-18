@@ -350,6 +350,7 @@
             const initialData = {};
             players.forEach(player => {
                 initialData[player.id] = {
+		    id: player.id,
                     name: player.name,
                     img: player.img,
                     score: 0
