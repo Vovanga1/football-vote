@@ -364,11 +364,11 @@
             db.ref('players').once('value').then(snapshot => {
                 const data = snapshot.val();
                 if (data && Object.keys(data).length === 100) {
-                    players = Object.values(data).map(key => ({
+                    players = Object.entries(data).map(([key, value]) => ({
                         id: Number(key),
-                        name: p.name,
-                        img: data[key].name,
-                        score: Number(data[key].score) || 0
+                        name: value.name,
+                        img: value.img,
+                        score: Number(value.score) || 0
                     }));
                     console.log('Загружено игроков:', players.length);
                 } else {
@@ -376,17 +376,21 @@
                     return initializeFirebaseData().then(() => {
                         return db.ref('players').once('value');
                     }).then(snapshot => {
-                        players = Object.values(snapshot.val()).map(p => ({
+                        players = Object.entries(newData).map(([key, value]) => ({
                             id: Number(key),
-                            name: p.name,
-                            img: data[key].name,
-                            score: Number(data[key].score) || 0
+                            name: value.name,
+                            img: value.img,
+                            score: Number(value.score) || 0
                         }));
                     });
                 }
             }).then(() => {
                 updateResults();
                 getRandomPair();
+		document.getElementById('player1-name').textContent = 'Загрузка...';
+        	document.getElementById('player2-name').textContent = 'Загрузка...';
+        	document.getElementById('player1-img').src = '';
+        	document.getElementById('player2-img').src = '';
             }).catch(error => {
                 console.error('Ошибка загрузки:', error);
             });
