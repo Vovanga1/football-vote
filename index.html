@@ -485,7 +485,6 @@
             loadData();
         };
 
-
         // Переключение вкладок
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => {
@@ -514,7 +513,6 @@
                 updateFactsDisplay();
             }
         }
-
 
         // Конфигурация Firebase
         const firebaseConfig = {
@@ -625,7 +623,7 @@
             { id: 85, name: 'Александр Самедов', img: 'players/Александр Самедов.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
             { id: 86, name: 'Андрей Каряка', img: 'players/Андрей Каряка.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
             { id: 87, name: 'Александр Рязанцев', img: 'players/Александр Рязанцев.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
-            { id: 88, name: 'Игорь Смольников', img: 'players/Игорь Смольников.jpg', wins: 0, draws: 0
+            { id: 88, name: 'Игорь Смольников', img: 'players/Игорь Смольников.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
             { id: 89, name: 'Игорь Добровольский', img: 'players/Игорь Добровольский.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
             { id: 90, name: 'Артём Ребров', img: 'players/Артём Ребров.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
             { id: 91, name: 'Ари', img: 'players/Ари.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
@@ -668,7 +666,8 @@
                     maxLossStreak: 0,
                     totalWins: 0,
                     totalDraws: 0,
-                    totalLosses: 0
+                    totalLosses: 0,
+                    lastMatches: []
                 };
             });
             return db.ref('players').set(initialData);
@@ -744,7 +743,8 @@
                     maxLossStreak: 0,
                     totalWins: 0,
                     totalDraws: 0,
-                    totalLosses: 0
+                    totalLosses: 0,
+                    lastMatches: []
                 };
             });
 
@@ -792,6 +792,15 @@
                     stats.maxLossStreak = stats.currentLossStreak;
                 }
             }
+            
+            // Обновляем последние матчи (максимум 5)
+            if (stats.lastMatches.length >= 5) {
+                stats.lastMatches.pop();
+            }
+            stats.lastMatches.unshift({
+                result: result,
+                timestamp: new Date().toISOString()
+            });
         }
 
         // Проверка на интересные факты
@@ -801,46 +810,68 @@
                 const player = players.find(p => p.id === playerId);
                 
                 // Серии побед
-                if (stats.currentWinStreak === 10) {
+                if (stats.currentWinStreak === 5 || stats.currentWinStreak === 10) {
                     addInterestingFact({
                         type: 'win_streak',
                         playerId: playerId,
                         playerName: player.name,
-                        value: 10,
-                        timestamp: new Date().toLocaleString()
+                        value: stats.currentWinStreak,
+                        timestamp: new Date().toISOString()
                     });
                 }
                 
                 // Серии ничьих
-                if (stats.currentDrawStreak === 5) {
+                if (stats.currentDrawStreak === 3 || stats.currentDrawStreak === 5) {
                     addInterestingFact({
                         type: 'draw_streak',
                         playerId: playerId,
                         playerName: player.name,
-                        value: 5,
-                        timestamp: new Date().toLocaleString()
+                        value: stats.currentDrawStreak,
+                        timestamp: new Date().toISOString()
                     });
                 }
                 
                 // Серии поражений
-                if (stats.currentLossStreak === 10) {
+                if (stats.currentLossStreak === 5 || stats.currentLossStreak === 10) {
                     addInterestingFact({
                         type: 'loss_streak',
                         playerId: playerId,
                         playerName: player.name,
-                        value: 10,
-                        timestamp: new Date().toLocaleString()
+                        value: stats.currentLossStreak,
+                        timestamp: new Date().toISOString()
                     });
                 }
                 
                 // Общее количество ничьих
-                if (stats.totalDraws === 15) {
+                if (stats.totalDraws === 10 || stats.totalDraws === 20) {
                     addInterestingFact({
                         type: 'total_draws',
                         playerId: playerId,
                         playerName: player.name,
-                        value: 15,
-                        timestamp: new Date().toLocaleString()
+                        value: stats.totalDraws,
+                        timestamp: new Date().toISOString()
+                    });
+                }
+                
+                // Общее количество побед
+                if (stats.totalWins === 25 || stats.totalWins === 50) {
+                    addInterestingFact({
+                        type: 'total_wins',
+                        playerId: playerId,
+                        playerName: player.name,
+                        value: stats.totalWins,
+                        timestamp: new Date().toISOString()
+                    });
+                }
+                
+                // Общее количество поражений
+                if (stats.totalLosses === 25 || stats.totalLosses === 50) {
+                    addInterestingFact({
+                        type: 'total_losses',
+                        playerId: playerId,
+                        playerName: player.name,
+                        value: stats.totalLosses,
+                        timestamp: new Date().toISOString()
                     });
                 }
             });
@@ -882,12 +913,20 @@
                         title = 'Рекорд ничьих!';
                         content = `<span class="fact-player">${fact.playerName}</span> достиг отметки в <span class="fact-value">${fact.value}</span> ничьих!`;
                         break;
+                    case 'total_wins':
+                        title = 'Рекорд побед!';
+                        content = `<span class="fact-player">${fact.playerName}</span> одержал <span class="fact-value">${fact.value}</span> побед!`;
+                        break;
+                    case 'total_losses':
+                        title = 'Рекорд поражений!';
+                        content = `<span class="fact-player">${fact.playerName}</span> потерпел <span class="fact-value">${fact.value}</span> поражений!`;
+                        break;
                 }
                 
                 card.innerHTML = `
                     <div class="fact-title">${title}</div>
                     <div class="fact-content">${content}</div>
-                    <div class="fact-date">${fact.timestamp}</div>
+                    <div class="fact-date">${new Date(fact.timestamp).toLocaleString()}</div>
                 `;
                 
                 container.appendChild(card);
@@ -903,15 +942,18 @@
             thead.innerHTML = '<th>Игрок \\ Игрок</th>';
             tbody.innerHTML = '';
             
-            const sortedPlayers = [...players].sort((a, b) => a.name.localeCompare(b.name));
+            // Сортируем игроков по очкам (от большего к меньшему)
+            const sortedPlayers = [...players].sort((a, b) => b.points - a.points);
             
+            // Добавляем заголовки с именами игроков
             sortedPlayers.forEach(player => {
-                thead.innerHTML += `<th>${player.name}</th>`;
+                thead.innerHTML += `<th title="${player.name}">${player.name.split(' ')[1] || player.name}</th>`;
             });
             
+            // Заполняем строки матрицы
             sortedPlayers.forEach(player1 => {
                 const row = document.createElement('tr');
-                row.innerHTML = `<td>${player1.name}</td>`;
+                row.innerHTML = `<td title="${player1.name}">${player1.name.split(' ')[1] || player1.name}</td>`;
                 
                 sortedPlayers.forEach(player2 => {
                     if (player1.id === player2.id) {
@@ -990,7 +1032,7 @@
                 player1: playerA.name,
                 player2: playerB.name,
                 result: result === 1 ? playerA.name : playerB.name,
-                timestamp: new Date().toLocaleString(),
+                timestamp: new Date().toISOString(),
                 player1Id: playerA.id,
                 player2Id: playerB.id,
                 resultValue: result
@@ -1033,7 +1075,7 @@
                 player1: playerA.name,
                 player2: playerB.name,
                 result: "Ничья",
-                timestamp: new Date().toLocaleString(),
+                timestamp: new Date().toISOString(),
                 player1Id: playerA.id,
                 player2Id: playerB.id,
                 resultValue: 0
@@ -1057,15 +1099,24 @@
         function getRandomPair() {
             if (!players || players.length < 2) return;
 
-            const player1Index = Math.floor(Math.random() * players.length);
-            let player2Index;
+            // Учитываем рейтинг при выборе пары (более сильные игроки встречаются чаще)
+            const weightedPlayers = [];
+            players.forEach(player => {
+                const weight = Math.max(1, Math.sqrt(player.points + 1));
+                for (let i = 0; i < weight; i++) {
+                    weightedPlayers.push(player.id);
+                }
+            });
+
+            const player1Id = weightedPlayers[Math.floor(Math.random() * weightedPlayers.length)];
+            let player2Id;
             
             do {
-                player2Index = Math.floor(Math.random() * players.length);
-            } while (player2Index === player1Index);
+                player2Id = weightedPlayers[Math.floor(Math.random() * weightedPlayers.length)];
+            } while (player2Id === player1Id);
 
-            const player1 = players[player1Index];
-            const player2 = players[player2Index];
+            const player1 = players.find(p => p.id === player1Id);
+            const player2 = players.find(p => p.id === player2Id);
 
             const img1 = document.getElementById('player1-img');
             const img2 = document.getElementById('player2-img');
@@ -1116,47 +1167,24 @@
             const tbody = document.querySelector('#resultsTable tbody');
             
             tbody.innerHTML = sorted.map((player, index) => {
-                const playerHistory = history.filter(entry => 
-                    entry.player1Id === player.id || entry.player2Id === player.id
-                ).slice(-5).reverse();
-                
-                const formIndicators = playerHistory.map(entry => {
-                    const isPlayer1 = entry.player1Id === player.id;
-                    let resultClass, resultText, opponent;
+                const stats = playerStats[player.id] || {};
+                const formIndicators = (stats.lastMatches || []).map(match => {
+                    let resultClass, resultSymbol;
                     
-                    if (entry.resultValue === 0) {
+                    if (match.result === 'win') {
+                        resultClass = 'win';
+                        resultSymbol = 'В';
+                    } else if (match.result === 'draw') {
                         resultClass = 'draw';
-                        resultText = 'Ничья';
-                        opponent = isPlayer1 ? entry.player2 : entry.player1;
-                    } else if (isPlayer1) {
-                        if (entry.resultValue === 1) {
-                            resultClass = 'win';
-                            resultText = 'Победа';
-                            opponent = entry.player2;
-                        } else {
-                            resultClass = 'loss';
-                            resultText = 'Поражение';
-                            opponent = entry.player2;
-                        }
+                        resultSymbol = 'Н';
                     } else {
-                        if (entry.resultValue === 2) {
-                            resultClass = 'win';
-                            resultText = 'Победа';
-                            opponent = entry.player1;
-                        } else {
-                            resultClass = 'loss';
-                            resultText = 'Поражение';
-                            opponent = entry.player1;
-                        }
+                        resultClass = 'loss';
+                        resultSymbol = 'П';
                     }
                     
                     return `
-                        <div class="form-indicator ${resultClass}">
-                            ${entry.resultValue === 0 ? 'Н' : (resultClass === 'win' ? 'В' : 'П')}
-                            <div class="form-tooltip">
-                                ${opponent}: ${resultText}<br>
-                                ${entry.timestamp}
-                            </div>
+                        <div class="form-indicator ${resultClass}" title="${new Date(match.timestamp).toLocaleString()}">
+                            ${resultSymbol}
                         </div>
                     `;
                 }).join('');
@@ -1171,7 +1199,7 @@
                         <td>${player.points}</td>
                         <td>
                             <div class="form-container">
-                                ${playerHistory.length > 0 ? formIndicators : 'Нет данных'}
+                                ${formIndicators || 'Нет данных'}
                             </div>
                         </td>
                     </tr>
@@ -1184,7 +1212,7 @@
             const tbody = document.querySelector('#historyTable tbody');
             tbody.innerHTML = history.map(entry => `
                 <tr>
-                    <td>${entry.timestamp}</td>
+                    <td>${new Date(entry.timestamp).toLocaleString()}</td>
                     <td>${entry.player1}</td>
                     <td>${entry.player2}</td>
                     <td>${entry.result}</td>
@@ -1207,11 +1235,11 @@
             const player = players.find(p => p.id === playerId);
             if (!player) return;
 
-            document.getElementById('selectedPlayerName').textContent = player.name;
+            document.getElementById('selectedPlayerName').textContent = `${player.name} (${player.points} очков)`;
 
             const playerHistory = history.filter(entry => 
                 entry.player1Id === playerId || entry.player2Id === playerId
-            );
+            ).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
             const tbody = document.getElementById('playerStatsBody');
             tbody.innerHTML = playerHistory.map(entry => {
@@ -1239,7 +1267,6 @@
                 `;
             }).join('');
         }
-    }
     </script>
 </body>
 </html>
