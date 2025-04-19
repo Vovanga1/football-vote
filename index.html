@@ -18,6 +18,7 @@
             display: flex;
             margin-bottom: 20px;
             border-bottom: 2px solid #006400;
+            flex-wrap: wrap;
         }
         .tab {
             padding: 10px 20px;
@@ -26,6 +27,7 @@
             margin-right: 5px;
             border-radius: 5px 5px 0 0;
             transition: all 0.3s;
+            margin-bottom: 5px;
         }
         .tab:hover {
             background: #ddd;
@@ -196,6 +198,117 @@
             justify-content: center;
         }
         
+        /* Стили для шахматной таблицы */
+        .matrix-container {
+            overflow: auto;
+            max-height: 80vh;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        #matrixTable {
+            border-collapse: collapse;
+            font-size: 14px;
+            min-width: 100%;
+        }
+        
+        #matrixTable th, #matrixTable td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+            min-width: 40px;
+            height: 40px;
+        }
+        
+        #matrixTable th {
+            position: sticky;
+            top: 0;
+            background: #006400;
+            color: white;
+            z-index: 10;
+        }
+        
+        #matrixTable th:first-child {
+            left: 0;
+            z-index: 20;
+        }
+        
+        #matrixTable td:first-child {
+            position: sticky;
+            left: 0;
+            background: white;
+            font-weight: bold;
+            z-index: 5;
+        }
+        
+        .cell-win {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .cell-draw {
+            background-color: #FFC107;
+        }
+        
+        .cell-loss {
+            background-color: #F44336;
+            color: white;
+        }
+        
+        .cell-empty {
+            background-color: #f9f9f9;
+        }
+        
+        /* Стили для вкладки интересных фактов */
+        .facts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .fact-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-left: 4px solid #006400;
+        }
+        
+        .fact-card.highlight {
+            border-left-color: #FFC107;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255,193,7,0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255,193,7,0); }
+            100% { box-shadow: 0 0 0 0 rgba(255,193,7,0); }
+        }
+        
+        .fact-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #006400;
+        }
+        
+        .fact-player {
+            font-weight: bold;
+            color: #006400;
+        }
+        
+        .fact-value {
+            font-weight: bold;
+            color: #F44336;
+        }
+        
+        .fact-date {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+        
         /* Стили для других таблиц */
         #historyTable, #playerStatsTable {
             width: 100%;
@@ -223,6 +336,29 @@
         .stats-container {
             margin-top: 20px;
         }
+        
+        /* Адаптивные стили */
+        @media (max-width: 768px) {
+            .player {
+                width: 100%;
+                max-width: 280px;
+            }
+            
+            .buttons {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            button {
+                width: 100%;
+                margin: 5px 0;
+            }
+            
+            .facts-container {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -231,6 +367,8 @@
     <div class="tabs">
         <div class="tab active" onclick="switchTab('voting')">Голосование</div>
         <div class="tab" onclick="switchTab('results')">Результаты</div>
+        <div class="tab" onclick="switchTab('matrix')">Матрица встреч</div>
+        <div class="tab" onclick="switchTab('facts')">Интересные факты</div>
         <div class="tab" onclick="switchTab('history')">История</div>
         <div class="tab" onclick="switchTab('stats')">Статистика</div>
     </div>
@@ -251,7 +389,9 @@
             </div>
         </div>
         <div class="buttons">
+            <button onclick="vote(1)">Выбрать левого</button>
             <button class="secondary" onclick="draw()">Ничья</button>
+            <button onclick="vote(2)">Выбрать правого</button>
         </div>
     </div>
 
@@ -272,6 +412,32 @@
             </thead>
             <tbody></tbody>
         </table>
+    </div>
+
+    <!-- Вкладка матрицы встреч -->
+    <div id="matrix" class="tab-content">
+        <h2>Матрица встреч</h2>
+        <p>Показаны результаты последних встреч между игроками</p>
+        <div class="matrix-container">
+            <table id="matrixTable">
+                <thead>
+                    <tr>
+                        <th>Игрок \ Игрок</th>
+                        <!-- Заголовки будут заполнены скриптом -->
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Вкладка интересных фактов -->
+    <div id="facts" class="tab-content">
+        <h2>Интересные факты</h2>
+        <p>Автоматически обнаруживаемые достижения и статистические рекорды</p>
+        <div class="facts-container" id="factsContainer">
+            <!-- Факты будут добавляться динамически -->
+        </div>
     </div>
 
     <!-- Вкладка истории -->
@@ -345,16 +511,104 @@
             { id: 8, name: 'Александр Кержаков', img: 'players/Александр Кержаков.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
             { id: 9, name: 'Сергей Игнашевич', img: 'players/Сергей Игнашевич.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
             { id: 10, name: 'Валерий Карпин', img: 'players/Валерий Карпин.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
-            // ... (остальные игроки по аналогии) ...
+            { id: 11, name: 'Дмитрий Лоськов', img: 'players/Дмитрий Лоськов.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 12, name: 'Роман Павлюченко', img: 'players/Роман Павлюченко.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 13, name: 'Андрей Тихонов', img: 'players/Андрей Тихонов.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 14, name: 'Василий Березуцкий', img: 'players/Василий Березуцкий.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 15, name: 'Александр Головин', img: 'players/Александр Головин.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 16, name: 'Павел Погребняк', img: 'players/Павел Погребняк.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 17, name: 'Сергей Овчинников', img: 'players/Сергей Овчинников.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 18, name: 'Константин Зырянов', img: 'players/Константин Зырянов.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 19, name: 'Вячеслав Малафеев', img: 'players/Вячеслав Малафеев.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 20, name: 'Виктор Онопко', img: 'players/Виктор Онопко.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 21, name: 'Владимир Бесчастных', img: 'players/Владимир Бесчастных.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 22, name: 'Денис Черышев', img: 'players/Денис Черышев.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 23, name: 'Игорь Денисов', img: 'players/Игорь Денисов.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 24, name: 'Егор Титов', img: 'players/Егор Титов.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 25, name: 'Алексей Миранчук', img: 'players/Алексей Миранчук.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 26, name: 'Дмитрий Сычев', img: 'players/Дмитрий Сычев.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 27, name: 'Олег Веретенников', img: 'players/Олег Веретенников.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 28, name: 'Ролан Гусев', img: 'players/Ролан Гусев.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 29, name: 'Артём Дзюба', img: 'players/Артём Дзюба.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 30, name: 'Денис Колодин', img: 'players/Денис Колодин.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 31, name: 'Александр Мостовой', img: 'players/Александр Мостовой.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 32, name: 'Динияр Билялетдинов', img: 'players/Динияр Билялетдинов.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 33, name: 'Александр Анюков', img: 'players/Александр Анюков.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 34, name: 'Марат Измайлов', img: 'players/Марат Измайлов.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 35, name: 'Дмитрий Булыкин', img: 'players/Дмитрий Булыкин.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 36, name: 'Матвей Сафонов', img: 'players/Матвей Сафонов.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 37, name: 'Олег Саленко', img: 'players/Олег Саленко.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 38, name: 'Гильерме', img: 'players/Гильерме.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 39, name: 'Владимир Быстров', img: 'players/Владимир Быстров.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 40, name: 'Алан Дзагоев', img: 'players/Алан Дзагоев.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 41, name: 'Илья Цымбаларь', img: 'players/Илья Цымбаларь.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 42, name: 'Роман Широков', img: 'players/Роман Широков.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 43, name: 'Вадим Евсеев', img: 'players/Вадим Евсеев.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 44, name: 'Алексей Березуцкий', img: 'players/Алексей Березуцкий.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 45, name: 'Дмитрий Хохлов', img: 'players/Дмитрий Хохлов.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 46, name: 'Игорь Шалимов', img: 'players/Игорь Шалимов.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 47, name: 'Дмитрий Харин', img: 'players/Дмитрий Харин.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 48, name: 'Дмитрий Ананко', img: 'players/Дмитрий Ананко.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 49, name: 'Фёдор Черенков', img: 'players/Фёдор Черенков.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 50, name: 'Дмитрий Кириченко', img: 'players/Дмитрий Кириченко.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 51, name: 'Руслан Нигматуллин', img: 'players/Руслан Нигматуллин.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 52, name: 'Сергей Рыжиков', img: 'players/Сергей Рыжиков.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 53, name: 'Дмитрий Сенников', img: 'players/Дмитрий Сенников.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 54, name: 'Георгий Щенников', img: 'players/Георгий Щенников.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 55, name: 'Александр Ерохин', img: 'players/Александр Ерохин.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 56, name: 'Денис Бояринцев', img: 'players/Денис Бояринцев.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 57, name: 'Владислав Радимов', img: 'players/Владислав Радимов.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 58, name: 'Игорь Семшов', img: 'players/Игорь Семшов.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 59, name: 'Игорь Колыванов', img: 'players/Игорь Колыванов.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 60, name: 'Далер Кузяев', img: 'players/Далер Кузяев.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 61, name: 'Денис Глушаков', img: 'players/Денис Глушаков.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 62, name: 'Дмитрий Баринов', img: 'players/Дмитрий Баринов.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 63, name: 'Андрей Лунёв', img: 'players/Андрей Лунёв.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 64, name: 'Александр Бухаров', img: 'players/Александр Бухаров.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 65, name: 'Геннадий Нижегородов', img: 'players/Геннадий Нижегородов.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 66, name: 'Игорь Корнеев', img: 'players/Игорь Корнеев.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 67, name: 'Роман Зобнин', img: 'players/Роман Зобнин.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 68, name: 'Александр Кокорин', img: 'players/Александр Кокорин.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 69, name: 'Юрий Дроздов', img: 'players/Юрий Дроздов.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 70, name: 'Александр Ширко', img: 'players/Александр Ширко.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 71, name: 'Дмитрий Комбаров', img: 'players/Дмитрий Комбаров.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 72, name: 'Владимир Бут', img: 'players/Владимир Бут.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 73, name: 'Владимир Кульков', img: 'players/Владимир Кульков.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 74, name: 'Марио Фернандес', img: 'players/Марио Фернандес.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 75, name: 'Евгений Алдонин', img: 'players/Евгений Алдонин.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 76, name: 'Антон Шунин', img: 'players/Антон Шунин.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 77, name: 'Станислав Черчесов', img: 'players/Станислав Черчесов.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 78, name: 'Виктор Файзулин', img: 'players/Виктор Файзулин.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 79, name: 'Игорь Яновский', img: 'players/Игорь Яновский.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 80, name: 'Руслан Пименов', img: 'players/Руслан Пименов.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 81, name: 'Валерий Минько', img: 'players/Валерий Минько.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 82, name: 'Пётр Быстров', img: 'players/Пётр Быстров.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 83, name: 'Александр Панов', img: 'players/Александр Панов.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 84, name: 'Сергей Юран', img: 'players/Сергей Юран.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 85, name: 'Александр Самедов', img: 'players/Александр Самедов.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 86, name: 'Андрей Каряка', img: 'players/Андрей Каряка.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 87, name: 'Александр Рязанцев', img: 'players/Александр Рязанцев.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 88, name: 'Игорь Смольников', img: 'players/Игорь Смольников.jpg', wins: 0, draws: 0
+            { id: 89, name: 'Игорь Добровольский', img: 'players/Игорь Добровольский.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 90, name: 'Артём Ребров', img: 'players/Артём Ребров.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 91, name: 'Ари', img: 'players/Ари.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 92, name: 'Юрий Никифоров', img: 'players/Юрий Никифоров.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 93, name: 'Валерий Есипов', img: 'players/Валерий Есипов.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 94, name: 'Кирилл Набабкин', img: 'players/Кирилл Набабкин.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 95, name: 'Максим Бузникин', img: 'players/Максим Бузникин.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 96, name: 'Александр Филимонов', img: 'players/Александр Филимонов.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 97, name: 'Роман Шаронов', img: 'players/Роман Шаронов.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 98, name: 'Александр Точилин', img: 'players/Александр Точилин.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 99, name: 'Дмитрий Бородин', img: 'players/Дмитрий Бородин.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
             { id: 100, name: 'Георгий Джикия', img: 'players/Георгий Джикия.jpg', wins: 0, draws: 0, losses: 0, points: 0 }
         ];
 
         let currentPair = null;
         let history = [];
-        let recentPairs = [];
-        const MAX_RECENT_PAIRS = 20;
+        let playerStats = {};
+        let interestingFacts = [];
 
-        // Инициализация данных в Firebase
+        // Инициализация Firebase данных
         function initializeFirebaseData() {
             const initialData = {};
             players.forEach(player => {
@@ -366,6 +620,18 @@
                     draws: 0,
                     losses: 0,
                     points: 0
+                };
+                
+                playerStats[player.id] = {
+                    currentWinStreak: 0,
+                    currentDrawStreak: 0,
+                    currentLossStreak: 0,
+                    maxWinStreak: 0,
+                    maxDrawStreak: 0,
+                    maxLossStreak: 0,
+                    totalWins: 0,
+                    totalDraws: 0,
+                    totalLosses: 0
                 };
             });
             return db.ref('players').set(initialData);
@@ -385,27 +651,26 @@
                         losses: Number(data[key].losses) || 0,
                         points: Number(data[key].points) || 0
                     }));
-                    console.log('Загружено игроков:', players.length);
                 } else {
-                    console.log('Инициализируем Firebase...');
-                    return initializeFirebaseData().then(() => {
-                        return db.ref('players').once('value');
-                    }).then(snapshot => {
-                        const newData = snapshot.val();
-                        players = Object.keys(newData).map(key => ({
-                            id: Number(key),
-                            name: newData[key].name,
-                            img: newData[key].img,
-                            wins: Number(newData[key].wins) || 0,
-                            draws: Number(newData[key].draws) || 0,
-                            losses: Number(newData[key].losses) || 0,
-                            points: Number(newData[key].points) || 0
-                        }));
-                    });
+                    return initializeFirebaseData().then(() => db.ref('players').once('value'))
+                        .then(snapshot => {
+                            const newData = snapshot.val();
+                            players = Object.keys(newData).map(key => ({
+                                id: Number(key),
+                                name: newData[key].name,
+                                img: newData[key].img,
+                                wins: Number(newData[key].wins) || 0,
+                                draws: Number(newData[key].draws) || 0,
+                                losses: Number(newData[key].losses) || 0,
+                                points: Number(newData[key].points) || 0
+                            }));
+                        });
                 }
             }).then(() => {
+                initializePlayerStats();
                 updateResults();
                 getRandomPair();
+                buildMatrixTable();
             }).catch(error => {
                 console.error('Ошибка загрузки:', error);
             });
@@ -415,29 +680,260 @@
                 history = snapshot.val() ? Object.values(snapshot.val()) : [];
                 updateHistoryTable();
                 updatePlayerSelect();
-                updateResults(); // Обновляем результаты, так как история изменилась
+                updateResults();
+                buildMatrixTable();
+            });
+
+            // Загрузка интересных фактов
+            db.ref('interestingFacts').on('value', snapshot => {
+                const factsData = snapshot.val();
+                if (factsData) {
+                    interestingFacts = Object.values(factsData).sort((a, b) => 
+                        new Date(b.timestamp) - new Date(a.timestamp));
+                    updateFactsDisplay();
+                }
+            });
+        }
+
+        // Инициализация статистики игроков
+        function initializePlayerStats() {
+            players.forEach(player => {
+                playerStats[player.id] = {
+                    currentWinStreak: 0,
+                    currentDrawStreak: 0,
+                    currentLossStreak: 0,
+                    maxWinStreak: 0,
+                    maxDrawStreak: 0,
+                    maxLossStreak: 0,
+                    totalWins: 0,
+                    totalDraws: 0,
+                    totalLosses: 0
+                };
+            });
+
+            history.forEach(match => {
+                updatePlayerStatsAfterMatch(match);
+            });
+        }
+
+        // Обновление статистики после матча
+        function updatePlayerStatsAfterMatch(match) {
+            const player1Id = match.player1Id;
+            const player2Id = match.player2Id;
+            const result = match.resultValue;
+            
+            updatePlayerStatsSingle(player1Id, result === 1 ? 'win' : (result === 0 ? 'draw' : 'loss'));
+            updatePlayerStatsSingle(player2Id, result === 2 ? 'win' : (result === 0 ? 'draw' : 'loss'));
+            
+            checkForInterestingFacts(match);
+        }
+
+        // Обновление статистики одного игрока
+        function updatePlayerStatsSingle(playerId, result) {
+            const stats = playerStats[playerId];
+            
+            if (result !== 'win') stats.currentWinStreak = 0;
+            if (result !== 'draw') stats.currentDrawStreak = 0;
+            if (result !== 'loss') stats.currentLossStreak = 0;
+            
+            if (result === 'win') {
+                stats.currentWinStreak++;
+                stats.totalWins++;
+                if (stats.currentWinStreak > stats.maxWinStreak) {
+                    stats.maxWinStreak = stats.currentWinStreak;
+                }
+            } else if (result === 'draw') {
+                stats.currentDrawStreak++;
+                stats.totalDraws++;
+                if (stats.currentDrawStreak > stats.maxDrawStreak) {
+                    stats.maxDrawStreak = stats.currentDrawStreak;
+                }
+            } else {
+                stats.currentLossStreak++;
+                stats.totalLosses++;
+                if (stats.currentLossStreak > stats.maxLossStreak) {
+                    stats.maxLossStreak = stats.currentLossStreak;
+                }
+            }
+        }
+
+        // Проверка на интересные факты
+        function checkForInterestingFacts(match) {
+            [match.player1Id, match.player2Id].forEach(playerId => {
+                const stats = playerStats[playerId];
+                const player = players.find(p => p.id === playerId);
+                
+                // Серии побед
+                if (stats.currentWinStreak === 10) {
+                    addInterestingFact({
+                        type: 'win_streak',
+                        playerId: playerId,
+                        playerName: player.name,
+                        value: 10,
+                        timestamp: new Date().toLocaleString()
+                    });
+                }
+                
+                // Серии ничьих
+                if (stats.currentDrawStreak === 5) {
+                    addInterestingFact({
+                        type: 'draw_streak',
+                        playerId: playerId,
+                        playerName: player.name,
+                        value: 5,
+                        timestamp: new Date().toLocaleString()
+                    });
+                }
+                
+                // Серии поражений
+                if (stats.currentLossStreak === 10) {
+                    addInterestingFact({
+                        type: 'loss_streak',
+                        playerId: playerId,
+                        playerName: player.name,
+                        value: 10,
+                        timestamp: new Date().toLocaleString()
+                    });
+                }
+                
+                // Общее количество ничьих
+                if (stats.totalDraws === 15) {
+                    addInterestingFact({
+                        type: 'total_draws',
+                        playerId: playerId,
+                        playerName: player.name,
+                        value: 15,
+                        timestamp: new Date().toLocaleString()
+                    });
+                }
+            });
+        }
+
+        // Добавление интересного факта
+        function addInterestingFact(fact) {
+            interestingFacts.unshift(fact);
+            updateFactsDisplay();
+            db.ref('interestingFacts').push(fact);
+        }
+
+        // Обновление отображения фактов
+        function updateFactsDisplay() {
+            const container = document.getElementById('factsContainer');
+            container.innerHTML = '';
+            
+            interestingFacts.slice(0, 50).forEach((fact, index) => {
+                const card = document.createElement('div');
+                card.className = `fact-card ${index < 3 ? 'highlight' : ''}`;
+                
+                let title = '';
+                let content = '';
+                
+                switch(fact.type) {
+                    case 'win_streak':
+                        title = 'Серия побед!';
+                        content = `<span class="fact-player">${fact.playerName}</span> не знает поражений уже <span class="fact-value">${fact.value}</span> матчей подряд!`;
+                        break;
+                    case 'draw_streak':
+                        title = 'Серия ничьих!';
+                        content = `<span class="fact-player">${fact.playerName}</span> сыграл вничью уже <span class="fact-value">${fact.value}</span> матчей подряд!`;
+                        break;
+                    case 'loss_streak':
+                        title = 'Серия поражений!';
+                        content = `<span class="fact-player">${fact.playerName}</span> не может выиграть уже <span class="fact-value">${fact.value}</span> матчей подряд!`;
+                        break;
+                    case 'total_draws':
+                        title = 'Рекорд ничьих!';
+                        content = `<span class="fact-player">${fact.playerName}</span> достиг отметки в <span class="fact-value">${fact.value}</span> ничьих!`;
+                        break;
+                }
+                
+                card.innerHTML = `
+                    <div class="fact-title">${title}</div>
+                    <div class="fact-content">${content}</div>
+                    <div class="fact-date">${fact.timestamp}</div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+
+        // Построение матрицы встреч
+        function buildMatrixTable() {
+            const table = document.getElementById('matrixTable');
+            const thead = table.querySelector('thead tr');
+            const tbody = table.querySelector('tbody');
+            
+            thead.innerHTML = '<th>Игрок \\ Игрок</th>';
+            tbody.innerHTML = '';
+            
+            const sortedPlayers = [...players].sort((a, b) => a.name.localeCompare(b.name));
+            
+            sortedPlayers.forEach(player => {
+                thead.innerHTML += `<th>${player.name}</th>`;
+            });
+            
+            sortedPlayers.forEach(player1 => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${player1.name}</td>`;
+                
+                sortedPlayers.forEach(player2 => {
+                    if (player1.id === player2.id) {
+                        row.innerHTML += '<td class="cell-empty">—</td>';
+                    } else {
+                        const matches = history.filter(match => 
+                            (match.player1Id === player1.id && match.player2Id === player2.id) ||
+                            (match.player1Id === player2.id && match.player2Id === player1.id)
+                        );
+                        
+                        if (matches.length === 0) {
+                            row.innerHTML += '<td class="cell-empty"></td>';
+                        } else {
+                            const lastMatch = matches[matches.length - 1];
+                            let resultClass = '';
+                            let resultSymbol = '';
+                            
+                            if (lastMatch.player1Id === player1.id) {
+                                if (lastMatch.resultValue === 1) {
+                                    resultClass = 'cell-win';
+                                    resultSymbol = 'В';
+                                } else if (lastMatch.resultValue === 0) {
+                                    resultClass = 'cell-draw';
+                                    resultSymbol = 'Н';
+                                } else {
+                                    resultClass = 'cell-loss';
+                                    resultSymbol = 'П';
+                                }
+                            } else {
+                                if (lastMatch.resultValue === 2) {
+                                    resultClass = 'cell-win';
+                                    resultSymbol = 'В';
+                                } else if (lastMatch.resultValue === 0) {
+                                    resultClass = 'cell-draw';
+                                    resultSymbol = 'Н';
+                                } else {
+                                    resultClass = 'cell-loss';
+                                    resultSymbol = 'П';
+                                }
+                            }
+                            
+                            row.innerHTML += `<td class="${resultClass}" title="${player1.name} vs ${player2.name} (${lastMatch.timestamp})">${resultSymbol}</td>`;
+                        }
+                    }
+                });
+                
+                tbody.appendChild(row);
             });
         }
 
         // Голосование
         function vote(result) {
-            if (!currentPair) {
-                console.error('Текущая пара не установлена');
-                return getRandomPair();
-            }
+            if (!currentPair) return getRandomPair();
 
             const playerA = players.find(p => p.id === currentPair.a);
             const playerB = players.find(p => p.id === currentPair.b);
             
-            if (!playerA || !playerB) {
-                console.error('Игроки не найдены', {
-                    currentPair,
-                    availableIds: players.map(p => p.id)
-                });
-                return getRandomPair();
-            }
+            if (!playerA || !playerB) return getRandomPair();
 
-            // Обновляем статистику
             if (result === 1) {
                 playerA.wins++;
                 playerA.points += 3;
@@ -448,7 +944,6 @@
                 playerA.losses++;
             }
 
-            // Подготовка данных для Firebase
             const updates = {
                 [`players/${playerA.id}`]: playerA,
                 [`players/${playerB.id}`]: playerB
@@ -464,12 +959,13 @@
                 resultValue: result
             };
 
-            // Сохраняем с обработкой ошибок
             db.ref().update(updates)
                 .then(() => db.ref('history').push(historyEntry))
                 .then(() => {
+                    updatePlayerStatsAfterMatch(historyEntry);
                     updateResults();
                     getRandomPair();
+                    buildMatrixTable();
                 })
                 .catch(error => {
                     console.error('Ошибка сохранения:', error);
@@ -479,26 +975,18 @@
 
         // Ничья
         function draw() {
-            if (!currentPair) {
-                console.error('Текущая пара не установлена');
-                return getRandomPair();
-            }
+            if (!currentPair) return getRandomPair();
 
             const playerA = players.find(p => p.id === currentPair.a);
             const playerB = players.find(p => p.id === currentPair.b);
             
-            if (!playerA || !playerB) {
-                console.error('Игроки не найдены');
-                return getRandomPair();
-            }
+            if (!playerA || !playerB) return getRandomPair();
 
-            // Обновляем статистику
             playerA.draws++;
             playerB.draws++;
             playerA.points += 1;
             playerB.points += 1;
 
-            // Подготовка данных для Firebase
             const updates = {
                 [`players/${playerA.id}`]: playerA,
                 [`players/${playerB.id}`]: playerB
@@ -514,12 +1002,13 @@
                 resultValue: 0
             };
 
-            // Сохраняем с обработкой ошибок
             db.ref().update(updates)
                 .then(() => db.ref('history').push(historyEntry))
                 .then(() => {
+                    updatePlayerStatsAfterMatch(historyEntry);
                     updateResults();
                     getRandomPair();
+                    buildMatrixTable();
                 })
                 .catch(error => {
                     console.error('Ошибка сохранения:', error);
@@ -527,12 +1016,9 @@
                 });
         }
 
-        // Случайная пара игроков
+        // Получение случайной пары игроков
         function getRandomPair() {
-            if (!players || players.length < 2) {
-                console.error('Недостаточно игроков');
-                return;
-            }
+            if (!players || players.length < 2) return;
 
             const player1Index = Math.floor(Math.random() * players.length);
             let player2Index;
@@ -544,23 +1030,19 @@
             const player1 = players[player1Index];
             const player2 = players[player2Index];
 
-            // Обновляем DOM с предзагрузкой изображений
             const img1 = document.getElementById('player1-img');
             const img2 = document.getElementById('player2-img');
             const placeholder1 = document.getElementById('player1-placeholder');
             const placeholder2 = document.getElementById('player2-placeholder');
 
-            // Сначала показываем плейсхолдер
             placeholder1.style.display = 'flex';
             placeholder2.style.display = 'flex';
             img1.style.display = 'none';
             img2.style.display = 'none';
 
-            // Обновляем имена
             document.getElementById('player1-name').textContent = player1.name;
             document.getElementById('player2-name').textContent = player2.name;
 
-            // Предзагрузка изображений
             const preloadImg1 = new Image();
             const preloadImg2 = new Image();
             
@@ -585,13 +1067,10 @@
             preloadImg1.src = player1.img;
             preloadImg2.src = player2.img;
 
-            // Сохраняем текущую пару
             currentPair = { 
                 a: Number(player1.id), 
                 b: Number(player2.id) 
             };
-            
-            console.log('Новая пара:', player1.name, 'vs', player2.name);
         }
 
         // Обновление таблицы результатов
@@ -600,41 +1079,34 @@
             const tbody = document.querySelector('#resultsTable tbody');
             
             tbody.innerHTML = sorted.map((player, index) => {
-                // Получаем последние 5 матчей игрока
                 const playerHistory = history.filter(entry => 
                     entry.player1Id === player.id || entry.player2Id === player.id
-                ).slice(-5).reverse(); // Берем последние 5 и переворачиваем, чтобы новые были в конце
+                ).slice(-5).reverse();
                 
-                // Создаем элементы формы
                 const formIndicators = playerHistory.map(entry => {
                     const isPlayer1 = entry.player1Id === player.id;
                     let resultClass, resultText, opponent;
                     
                     if (entry.resultValue === 0) {
-                        // Ничья
                         resultClass = 'draw';
                         resultText = 'Ничья';
                         opponent = isPlayer1 ? entry.player2 : entry.player1;
                     } else if (isPlayer1) {
                         if (entry.resultValue === 1) {
-                            // Победа
                             resultClass = 'win';
                             resultText = 'Победа';
                             opponent = entry.player2;
                         } else {
-                            // Поражение
                             resultClass = 'loss';
                             resultText = 'Поражение';
                             opponent = entry.player2;
                         }
                     } else {
                         if (entry.resultValue === 2) {
-                            // Победа
                             resultClass = 'win';
                             resultText = 'Победа';
                             opponent = entry.player1;
                         } else {
-                            // Поражение
                             resultClass = 'loss';
                             resultText = 'Поражение';
                             opponent = entry.player1;
@@ -753,6 +1225,10 @@
                 updatePlayerSelect();
             } else if (tabId === 'results') {
                 updateResults();
+            } else if (tabId === 'matrix') {
+                buildMatrixTable();
+            } else if (tabId === 'facts') {
+                updateFactsDisplay();
             }
         }
 
