@@ -110,6 +110,19 @@
         button.secondary:hover {
             background: #5a6268;
         }
+        .placeholder-img {
+            width: 100%;
+            height: 200px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        /* Стили для таблицы результатов */
         #resultsTable {
             width: 100%;
             border-collapse: collapse;
@@ -137,6 +150,69 @@
             font-weight: bold;
             color: #006400;
         }
+        
+        /* Стили для формы последних матчей */
+        .form-indicator {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            margin: 0 2px;
+            color: white;
+            font-weight: bold;
+            line-height: 20px;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+        }
+        .win {
+            background-color: #4CAF50;
+        }
+        .draw {
+            background-color: #FFC107;
+        }
+        .loss {
+            background-color: #F44336;
+        }
+        .form-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 100;
+            display: none;
+        }
+        .form-indicator:hover .form-tooltip {
+            display: block;
+        }
+        .form-container {
+            display: flex;
+            justify-content: center;
+        }
+        
+        /* Стили для других таблиц */
+        #historyTable, #playerStatsTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 15px;
+        }
+        #historyTable th, #historyTable td,
+        #playerStatsTable th, #playerStatsTable td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        #historyTable th, #playerStatsTable th {
+            background-color: #006400;
+            color: white;
+        }
         select {
             padding: 8px 15px;
             border-radius: 5px;
@@ -146,17 +222,6 @@
         }
         .stats-container {
             margin-top: 20px;
-        }
-        .placeholder-img {
-            width: 100%;
-            height: 200px;
-            background: #f0f0f0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #888;
-            border-radius: 8px;
-            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -204,6 +269,7 @@
                     <th>Н</th>
                     <th>П</th>
                     <th>Очки</th>
+                    <th>Форма</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -281,7 +347,7 @@
             { id: 8, name: 'Александр Кержаков', img: 'players/Александр Кержаков.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
             { id: 9, name: 'Сергей Игнашевич', img: 'players/Сергей Игнашевич.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
             { id: 10, name: 'Валерий Карпин', img: 'players/Валерий Карпин.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
-            // ... (остальные игроки по аналогии)
+            // ... (остальные игроки по аналогии) ...
             { id: 100, name: 'Георгий Джикия', img: 'players/Георгий Джикия.jpg', wins: 0, draws: 0, losses: 0, points: 0 }
         ];
 
@@ -351,6 +417,7 @@
                 history = snapshot.val() ? Object.values(snapshot.val()) : [];
                 updateHistoryTable();
                 updatePlayerSelect();
+                updateResults(); // Обновляем результаты, так как история изменилась
             });
         }
 
@@ -533,16 +600,76 @@
         function updateResults() {
             const sorted = [...players].sort((a, b) => b.points - a.points);
             const tbody = document.querySelector('#resultsTable tbody');
-            tbody.innerHTML = sorted.map((p, index) => `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td>${p.name}</td>
-                    <td>${p.wins}</td>
-                    <td>${p.draws}</td>
-                    <td>${p.losses}</td>
-                    <td>${p.points}</td>
-                </tr>
-            `).join('');
+            
+            tbody.innerHTML = sorted.map((player, index) => {
+                // Получаем последние 5 матчей игрока
+                const playerHistory = history.filter(entry => 
+                    entry.player1Id === player.id || entry.player2Id === player.id
+                ).slice(-5).reverse(); // Берем последние 5 и переворачиваем, чтобы новые были в конце
+                
+                // Создаем элементы формы
+                const formIndicators = playerHistory.map(entry => {
+                    const isPlayer1 = entry.player1Id === player.id;
+                    let resultClass, resultText, opponent;
+                    
+                    if (entry.resultValue === 0) {
+                        // Ничья
+                        resultClass = 'draw';
+                        resultText = 'Ничья';
+                        opponent = isPlayer1 ? entry.player2 : entry.player1;
+                    } else if (isPlayer1) {
+                        if (entry.resultValue === 1) {
+                            // Победа
+                            resultClass = 'win';
+                            resultText = 'Победа';
+                            opponent = entry.player2;
+                        } else {
+                            // Поражение
+                            resultClass = 'loss';
+                            resultText = 'Поражение';
+                            opponent = entry.player2;
+                        }
+                    } else {
+                        if (entry.resultValue === 2) {
+                            // Победа
+                            resultClass = 'win';
+                            resultText = 'Победа';
+                            opponent = entry.player1;
+                        } else {
+                            // Поражение
+                            resultClass = 'loss';
+                            resultText = 'Поражение';
+                            opponent = entry.player1;
+                        }
+                    }
+                    
+                    return `
+                        <div class="form-indicator ${resultClass}">
+                            ${entry.resultValue === 0 ? 'Н' : (resultClass === 'win' ? 'В' : 'П')}
+                            <div class="form-tooltip">
+                                ${opponent}: ${resultText}<br>
+                                ${entry.timestamp}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                return `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${player.name}</td>
+                        <td>${player.wins}</td>
+                        <td>${player.draws}</td>
+                        <td>${player.losses}</td>
+                        <td>${player.points}</td>
+                        <td>
+                            <div class="form-container">
+                                ${playerHistory.length > 0 ? formIndicators : 'Нет данных'}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         // Обновление таблицы истории
