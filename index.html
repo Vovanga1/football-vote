@@ -7,442 +7,762 @@
     <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-database-compat.js"></script>
     <style>
-        /* Основные стили (остаются как в предыдущей версии) */
-        
-        /* Стили для шахматной таблицы */
-        .matrix-container {
-            overflow: auto;
-            max-height: 80vh;
-            margin-top: 20px;
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
         }
-        
-        #matrixTable {
-            border-collapse: collapse;
-            font-size: 14px;
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #006400;
         }
-        
-        #matrixTable th, #matrixTable td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: center;
-            min-width: 40px;
-            height: 40px;
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: #f0f0f0;
+            margin-right: 5px;
+            border-radius: 5px 5px 0 0;
+            transition: all 0.3s;
         }
-        
-        #matrixTable th {
-            position: sticky;
-            top: 0;
+        .tab:hover {
+            background: #ddd;
+        }
+        .tab.active {
             background: #006400;
             color: white;
-            z-index: 10;
         }
-        
-        #matrixTable th:first-child {
-            left: 0;
-            z-index: 20;
-        }
-        
-        #matrixTable td:first-child {
-            position: sticky;
-            left: 0;
+        .tab-content {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
             background: white;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .player-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+        .player {
+            border: 2px solid #ccc;
+            padding: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            width: 280px;
+            background: white;
+        }
+        .player:hover {
+            border-color: #006400;
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .player img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #f0f0f0;
+        }
+        .player h3 {
+            margin: 10px 0;
+            color: #333;
+        }
+        .vs-text {
+            font-size: 24px;
             font-weight: bold;
-            z-index: 5;
+            color: #333;
         }
-        
-        .cell-win {
-            background-color: #4CAF50;
+        .buttons {
+            text-align: center;
+            margin: 30px 0;
+        }
+        button {
+            padding: 12px 25px;
+            margin: 0 10px;
+            cursor: pointer;
+            background: #006400;
             color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #004d00;
+            transform: translateY(-2px);
+        }
+        button.secondary {
+            background: #6c757d;
+        }
+        button.secondary:hover {
+            background: #5a6268;
+        }
+        .placeholder-img {
+            width: 100%;
+            height: 200px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            border-radius: 8px;
+            margin-bottom: 10px;
         }
         
-        .cell-draw {
+        /* Стили для таблицы результатов */
+        #resultsTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 15px;
+        }
+        #resultsTable th, #resultsTable td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+        #resultsTable th {
+            background-color: #006400;
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+        #resultsTable tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        #resultsTable tr:hover {
+            background-color: #e6e6e6;
+        }
+        #resultsTable td:nth-child(6) {
+            font-weight: bold;
+            color: #006400;
+        }
+        
+        /* Стили для формы последних матчей */
+        .form-indicator {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            margin: 0 2px;
+            color: white;
+            font-weight: bold;
+            line-height: 20px;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+        }
+        .win {
+            background-color: #4CAF50;
+        }
+        .draw {
             background-color: #FFC107;
         }
-        
-        .cell-loss {
+        .loss {
             background-color: #F44336;
+        }
+        .form-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 100;
+            display: none;
+        }
+        .form-indicator:hover .form-tooltip {
+            display: block;
+        }
+        .form-container {
+            display: flex;
+            justify-content: center;
+        }
+        
+        /* Стили для других таблиц */
+        #historyTable, #playerStatsTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 15px;
+        }
+        #historyTable th, #historyTable td,
+        #playerStatsTable th, #playerStatsTable td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        #historyTable th, #playerStatsTable th {
+            background-color: #006400;
             color: white;
         }
-        
-        .cell-empty {
-            background-color: #f9f9f9;
+        select {
+            padding: 8px 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            margin: 10px 0;
+            width: 300px;
         }
-        
-        /* Стили для вкладки интересных фактов */
-        .facts-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 15px;
+        .stats-container {
             margin-top: 20px;
-        }
-        
-        .fact-card {
-            background: white;
-            border-radius: 8px;
-            padding: 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            border-left: 4px solid #006400;
-        }
-        
-        .fact-card.highlight {
-            border-left-color: #FFC107;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(255,193,7,0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(255,193,7,0); }
-            100% { box-shadow: 0 0 0 0 rgba(255,193,7,0); }
-        }
-        
-        .fact-title {
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #006400;
-        }
-        
-        .fact-player {
-            font-weight: bold;
-            color: #006400;
-        }
-        
-        .fact-value {
-            font-weight: bold;
-            color: #F44336;
         }
     </style>
 </head>
 <body>
-    <!-- Остальная разметка (как в предыдущей версии) -->
-    
-    <!-- Добавляем новую вкладку -->
-    <div id="matrix" class="tab-content">
-        <h2>Матрица встреч</h2>
-        <div class="matrix-container">
-            <table id="matrixTable">
-                <thead>
-                    <tr>
-                        <th>Игрок \ Игрок</th>
-                        <!-- Заголовки будут заполнены скриптом -->
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+    <h1>Кто лучший футболист?</h1>
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('voting')">Голосование</div>
+        <div class="tab" onclick="switchTab('results')">Результаты</div>
+        <div class="tab" onclick="switchTab('history')">История</div>
+        <div class="tab" onclick="switchTab('stats')">Статистика</div>
+    </div>
+
+    <!-- Вкладка голосования -->
+    <div id="voting" class="tab-content active">
+        <div class="player-container">
+            <div class="player" id="player1" onclick="vote(1)">
+                <div class="placeholder-img" id="player1-placeholder">Фото игрока</div>
+                <img src="" alt="" id="player1-img" style="display: none;">
+                <h3 id="player1-name">Загрузка...</h3>
+            </div>
+            <span class="vs-text">vs</span>
+            <div class="player" id="player2" onclick="vote(2)">
+                <div class="placeholder-img" id="player2-placeholder">Фото игрока</div>
+                <img src="" alt="" id="player2-img" style="display: none;">
+                <h3 id="player2-name">Загрузка...</h3>
+            </div>
+        </div>
+        <div class="buttons">
+            <button onclick="vote(1)">Выбрать левого</button>
+            <button class="secondary" onclick="draw()">Ничья</button>
+            <button onclick="vote(2)">Выбрать правого</button>
         </div>
     </div>
-    
-    <div id="facts" class="tab-content">
-        <h2>Интересные факты</h2>
-        <div class="facts-container" id="factsContainer">
-            <!-- Факты будут добавляться динамически -->
+
+    <!-- Вкладка результатов -->
+    <div id="results" class="tab-content">
+        <h2>Таблица результатов</h2>
+        <table id="resultsTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Игрок</th>
+                    <th>В</th>
+                    <th>Н</th>
+                    <th>П</th>
+                    <th>Очки</th>
+                    <th>Форма</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- Вкладка истории -->
+    <div id="history" class="tab-content">
+        <h2>История голосований</h2>
+        <table id="historyTable">
+            <thead>
+                <tr>
+                    <th>Дата</th>
+                    <th>Игрок 1</th>
+                    <th>Игрок 2</th>
+                    <th>Результат</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- Вкладка статистики -->
+    <div id="stats" class="tab-content">
+        <h2>Статистика игрока</h2>
+        <select id="playerSelect" onchange="showPlayerStats()">
+            <option value="">Выберите игрока</option>
+        </select>
+        
+        <div class="stats-container">
+            <h3 id="selectedPlayerName"></h3>
+            <table id="playerStatsTable">
+                <thead>
+                    <tr>
+                        <th>Соперник</th>
+                        <th>Результат</th>
+                        <th>Очки</th>
+                    </tr>
+                </thead>
+                <tbody id="playerStatsBody"></tbody>
+            </table>
         </div>
     </div>
 
     <script>
-        // Конфигурация Firebase и инициализация (как в предыдущей версии)
-        
-        // Новые переменные
-        let playerStats = {}; // Для отслеживания статистики игроков
-        let interestingFacts = []; // Массив интересных фактов
-        
-        // После загрузки данных инициализируем статистику
-        function initializePlayerStats() {
+        // Конфигурация Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAd2i30miJYAXo0_TreJaBRM2UCiY4B8ds",
+            authDomain: "footballvoting-e69aa.firebaseapp.com",
+            databaseURL: "https://footballvoting-e69aa-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "footballvoting-e69aa",
+            storageBucket: "footballvoting-e69aa.appspot.com",
+            messagingSenderId: "863877355837",
+            appId: "1:863877355837:web:0b6f57698eab53ca8d8d54"
+        };
+
+        // Инициализация Firebase
+        try {
+            firebase.initializeApp(firebaseConfig);
+            console.log('Firebase initialized');
+        } catch (error) {
+            console.error('Firebase error:', error);
+        }
+        const db = firebase.database();
+
+        // Полный список из 100 игроков
+        let players = [
+            { id: 1, name: 'Андрей Аршавин', img: 'players/Андрей Аршавин.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 2, name: 'Игорь Акинфеев', img: 'players/Игорь Акинфеев.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 3, name: 'Юрий Жирков', img: 'players/Юрий Жирков.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 4, name: 'Дмитрий Аленичев', img: 'players/Дмитрий Аленичев.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 5, name: 'Сергей Семак', img: 'players/Сергей Семак.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 6, name: 'Алексей Смертин', img: 'players/Алексей Смертин.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 7, name: 'Андрей Канчельскис', img: 'players/Андрей Канчельскис.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 8, name: 'Александр Кержаков', img: 'players/Александр Кержаков.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 9, name: 'Сергей Игнашевич', img: 'players/Сергей Игнашевич.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            { id: 10, name: 'Валерий Карпин', img: 'players/Валерий Карпин.jpg', wins: 0, draws: 0, losses: 0, points: 0 },
+            // ... (остальные игроки по аналогии) ...
+            { id: 100, name: 'Георгий Джикия', img: 'players/Георгий Джикия.jpg', wins: 0, draws: 0, losses: 0, points: 0 }
+        ];
+
+        let currentPair = null;
+        let history = [];
+        let recentPairs = [];
+        const MAX_RECENT_PAIRS = 20;
+
+        // Инициализация данных в Firebase
+        function initializeFirebaseData() {
+            const initialData = {};
             players.forEach(player => {
-                playerStats[player.id] = {
-                    currentWinStreak: 0,
-                    currentDrawStreak: 0,
-                    currentLossStreak: 0,
-                    maxWinStreak: 0,
-                    maxDrawStreak: 0,
-                    maxLossStreak: 0,
-                    totalWins: 0,
-                    totalDraws: 0,
-                    totalLosses: 0
+                initialData[player.id] = {
+                    id: player.id,
+                    name: player.name,
+                    img: player.img,
+                    wins: 0,
+                    draws: 0,
+                    losses: 0,
+                    points: 0
                 };
             });
-            
-            // Анализируем историю для заполнения статистики
-            history.forEach(match => {
-                updatePlayerStatsAfterMatch(match);
+            return db.ref('players').set(initialData);
+        }
+
+        // Загрузка данных
+        function loadData() {
+            db.ref('players').once('value').then(snapshot => {
+                const data = snapshot.val();
+                if (data && Object.keys(data).length === 100) {
+                    players = Object.keys(data).map(key => ({
+                        id: Number(key),
+                        name: data[key].name,
+                        img: data[key].img,
+                        wins: Number(data[key].wins) || 0,
+                        draws: Number(data[key].draws) || 0,
+                        losses: Number(data[key].losses) || 0,
+                        points: Number(data[key].points) || 0
+                    }));
+                    console.log('Загружено игроков:', players.length);
+                } else {
+                    console.log('Инициализируем Firebase...');
+                    return initializeFirebaseData().then(() => {
+                        return db.ref('players').once('value');
+                    }).then(snapshot => {
+                        const newData = snapshot.val();
+                        players = Object.keys(newData).map(key => ({
+                            id: Number(key),
+                            name: newData[key].name,
+                            img: newData[key].img,
+                            wins: Number(newData[key].wins) || 0,
+                            draws: Number(newData[key].draws) || 0,
+                            losses: Number(newData[key].losses) || 0,
+                            points: Number(newData[key].points) || 0
+                        }));
+                    });
+                }
+            }).then(() => {
+                updateResults();
+                getRandomPair();
+            }).catch(error => {
+                console.error('Ошибка загрузки:', error);
+            });
+
+            // Загрузка истории
+            db.ref('history').on('value', snapshot => {
+                history = snapshot.val() ? Object.values(snapshot.val()) : [];
+                updateHistoryTable();
+                updatePlayerSelect();
+                updateResults(); // Обновляем результаты, так как история изменилась
             });
         }
-        
-        // Обновление статистики после матча
-        function updatePlayerStatsAfterMatch(match) {
-            const player1Id = match.player1Id;
-            const player2Id = match.player2Id;
-            const result = match.resultValue;
-            
-            // Обрабатываем первого игрока
-            updatePlayerStatsSingle(player1Id, result === 1 ? 'win' : (result === 0 ? 'draw' : 'loss'));
-            
-            // Обрабатываем второго игрока
-            updatePlayerStatsSingle(player2Id, result === 2 ? 'win' : (result === 0 ? 'draw' : 'loss'));
-            
-            // Проверяем интересные факты
-            checkForInterestingFacts(match);
-        }
-        
-        // Обновление статистики одного игрока
-        function updatePlayerStatsSingle(playerId, result) {
-            const stats = playerStats[playerId];
-            
-            // Сбрасываем противоположные серии
-            if (result !== 'win') stats.currentWinStreak = 0;
-            if (result !== 'draw') stats.currentDrawStreak = 0;
-            if (result !== 'loss') stats.currentLossStreak = 0;
-            
-            // Увеличиваем текущую серию
-            if (result === 'win') {
-                stats.currentWinStreak++;
-                stats.totalWins++;
-                if (stats.currentWinStreak > stats.maxWinStreak) {
-                    stats.maxWinStreak = stats.currentWinStreak;
-                }
-            } 
-            else if (result === 'draw') {
-                stats.currentDrawStreak++;
-                stats.totalDraws++;
-                if (stats.currentDrawStreak > stats.maxDrawStreak) {
-                    stats.maxDrawStreak = stats.currentDrawStreak;
-                }
-            } 
-            else {
-                stats.currentLossStreak++;
-                stats.totalLosses++;
-                if (stats.currentLossStreak > stats.maxLossStreak) {
-                    stats.maxLossStreak = stats.currentLossStreak;
-                }
+
+        // Голосование
+        function vote(result) {
+            if (!currentPair) {
+                console.error('Текущая пара не установлена');
+                return getRandomPair();
             }
+
+            const playerA = players.find(p => p.id === currentPair.a);
+            const playerB = players.find(p => p.id === currentPair.b);
+            
+            if (!playerA || !playerB) {
+                console.error('Игроки не найдены', {
+                    currentPair,
+                    availableIds: players.map(p => p.id)
+                });
+                return getRandomPair();
+            }
+
+            // Обновляем статистику
+            if (result === 1) {
+                playerA.wins++;
+                playerA.points += 3;
+                playerB.losses++;
+            } else if (result === 2) {
+                playerB.wins++;
+                playerB.points += 3;
+                playerA.losses++;
+            }
+
+            // Подготовка данных для Firebase
+            const updates = {
+                [`players/${playerA.id}`]: playerA,
+                [`players/${playerB.id}`]: playerB
+            };
+
+            const historyEntry = {
+                player1: playerA.name,
+                player2: playerB.name,
+                result: result === 1 ? playerA.name : playerB.name,
+                timestamp: new Date().toLocaleString(),
+                player1Id: playerA.id,
+                player2Id: playerB.id,
+                resultValue: result
+            };
+
+            // Сохраняем с обработкой ошибок
+            db.ref().update(updates)
+                .then(() => db.ref('history').push(historyEntry))
+                .then(() => {
+                    updateResults();
+                    getRandomPair();
+                })
+                .catch(error => {
+                    console.error('Ошибка сохранения:', error);
+                    getRandomPair();
+                });
         }
-        
-        // Проверка на интересные факты
-        function checkForInterestingFacts(match) {
-            const player1 = players.find(p => p.id === match.player1Id);
-            const player2 = players.find(p => p.id === match.player2Id);
-            const result = match.resultValue;
+
+        // Ничья
+        function draw() {
+            if (!currentPair) {
+                console.error('Текущая пара не установлена');
+                return getRandomPair();
+            }
+
+            const playerA = players.find(p => p.id === currentPair.a);
+            const playerB = players.find(p => p.id === currentPair.b);
             
-            // Проверяем статистику обоих игроков
-            [match.player1Id, match.player2Id].forEach(playerId => {
-                const stats = playerStats[playerId];
-                const player = players.find(p => p.id === playerId);
-                
-                // Серии побед
-                if (stats.currentWinStreak === 10) {
-                    addInterestingFact({
-                        type: 'win_streak',
-                        playerId: playerId,
-                        playerName: player.name,
-                        value: 10,
-                        timestamp: new Date().toLocaleString()
-                    });
-                }
-                
-                // Серии ничьих
-                if (stats.currentDrawStreak === 5) {
-                    addInterestingFact({
-                        type: 'draw_streak',
-                        playerId: playerId,
-                        playerName: player.name,
-                        value: 5,
-                        timestamp: new Date().toLocaleString()
-                    });
-                }
-                
-                // Серии поражений
-                if (stats.currentLossStreak === 10) {
-                    addInterestingFact({
-                        type: 'loss_streak',
-                        playerId: playerId,
-                        playerName: player.name,
-                        value: 10,
-                        timestamp: new Date().toLocaleString()
-                    });
-                }
-                
-                // Общее количество ничьих
-                if (stats.totalDraws === 15) {
-                    addInterestingFact({
-                        type: 'total_draws',
-                        playerId: playerId,
-                        playerName: player.name,
-                        value: 15,
-                        timestamp: new Date().toLocaleString()
-                    });
-                }
-            });
+            if (!playerA || !playerB) {
+                console.error('Игроки не найдены');
+                return getRandomPair();
+            }
+
+            // Обновляем статистику
+            playerA.draws++;
+            playerB.draws++;
+            playerA.points += 1;
+            playerB.points += 1;
+
+            // Подготовка данных для Firebase
+            const updates = {
+                [`players/${playerA.id}`]: playerA,
+                [`players/${playerB.id}`]: playerB
+            };
+
+            const historyEntry = {
+                player1: playerA.name,
+                player2: playerB.name,
+                result: "Ничья",
+                timestamp: new Date().toLocaleString(),
+                player1Id: playerA.id,
+                player2Id: playerB.id,
+                resultValue: 0
+            };
+
+            // Сохраняем с обработкой ошибок
+            db.ref().update(updates)
+                .then(() => db.ref('history').push(historyEntry))
+                .then(() => {
+                    updateResults();
+                    getRandomPair();
+                })
+                .catch(error => {
+                    console.error('Ошибка сохранения:', error);
+                    getRandomPair();
+                });
         }
-        
-        // Добавление интересного факта
-        function addInterestingFact(fact) {
-            interestingFacts.unshift(fact); // Добавляем в начало массива
-            updateFactsDisplay();
+
+        // Случайная пара игроков
+        function getRandomPair() {
+            if (!players || players.length < 2) {
+                console.error('Недостаточно игроков');
+                return;
+            }
+
+            const player1Index = Math.floor(Math.random() * players.length);
+            let player2Index;
             
-            // Сохраняем в Firebase
-            db.ref('interestingFacts').push(fact);
+            do {
+                player2Index = Math.floor(Math.random() * players.length);
+            } while (player2Index === player1Index);
+
+            const player1 = players[player1Index];
+            const player2 = players[player2Index];
+
+            // Обновляем DOM с предзагрузкой изображений
+            const img1 = document.getElementById('player1-img');
+            const img2 = document.getElementById('player2-img');
+            const placeholder1 = document.getElementById('player1-placeholder');
+            const placeholder2 = document.getElementById('player2-placeholder');
+
+            // Сначала показываем плейсхолдер
+            placeholder1.style.display = 'flex';
+            placeholder2.style.display = 'flex';
+            img1.style.display = 'none';
+            img2.style.display = 'none';
+
+            // Обновляем имена
+            document.getElementById('player1-name').textContent = player1.name;
+            document.getElementById('player2-name').textContent = player2.name;
+
+            // Предзагрузка изображений
+            const preloadImg1 = new Image();
+            const preloadImg2 = new Image();
+            
+            preloadImg1.onload = function() {
+                img1.src = player1.img;
+                img1.style.display = 'block';
+                placeholder1.style.display = 'none';
+            };
+            preloadImg1.onerror = function() {
+                placeholder1.textContent = 'Нет фото';
+            };
+            
+            preloadImg2.onload = function() {
+                img2.src = player2.img;
+                img2.style.display = 'block';
+                placeholder2.style.display = 'none';
+            };
+            preloadImg2.onerror = function() {
+                placeholder2.textContent = 'Нет фото';
+            };
+            
+            preloadImg1.src = player1.img;
+            preloadImg2.src = player2.img;
+
+            // Сохраняем текущую пару
+            currentPair = { 
+                a: Number(player1.id), 
+                b: Number(player2.id) 
+            };
+            
+            console.log('Новая пара:', player1.name, 'vs', player2.name);
         }
-        
-        // Обновление отображения фактов
-        function updateFactsDisplay() {
-            const container = document.getElementById('factsContainer');
-            container.innerHTML = '';
+
+        // Обновление таблицы результатов
+        function updateResults() {
+            const sorted = [...players].sort((a, b) => b.points - a.points);
+            const tbody = document.querySelector('#resultsTable tbody');
             
-            interestingFacts.slice(0, 50).forEach((fact, index) => {
-                const card = document.createElement('div');
-                card.className = `fact-card ${index < 3 ? 'highlight' : ''}`;
+            tbody.innerHTML = sorted.map((player, index) => {
+                // Получаем последние 5 матчей игрока
+                const playerHistory = history.filter(entry => 
+                    entry.player1Id === player.id || entry.player2Id === player.id
+                ).slice(-5).reverse(); // Берем последние 5 и переворачиваем, чтобы новые были в конце
                 
-                let title = '';
-                let content = '';
-                
-                switch(fact.type) {
-                    case 'win_streak':
-                        title = 'Серия побед!';
-                        content = `<span class="fact-player">${fact.playerName}</span> не знает поражений уже <span class="fact-value">${fact.value}</span> матчей подряд!`;
-                        break;
-                    case 'draw_streak':
-                        title = 'Серия ничьих!';
-                        content = `<span class="fact-player">${fact.playerName}</span> сыграл вничью уже <span class="fact-value">${fact.value}</span> матчей подряд!`;
-                        break;
-                    case 'loss_streak':
-                        title = 'Серия поражений!';
-                        content = `<span class="fact-player">${fact.playerName}</span> не может выиграть уже <span class="fact-value">${fact.value}</span> матчей подряд!`;
-                        break;
-                    case 'total_draws':
-                        title = 'Рекорд ничьих!';
-                        content = `<span class="fact-player">${fact.playerName}</span> достиг отметки в <span class="fact-value">${fact.value}</span> ничьих!`;
-                        break;
-                }
-                
-                card.innerHTML = `
-                    <div class="fact-title">${title}</div>
-                    <div class="fact-content">${content}</div>
-                    <div class="fact-date">${fact.timestamp}</div>
-                `;
-                
-                container.appendChild(card);
-            });
-        }
-        
-        // Создание матрицы встреч
-        function buildMatrixTable() {
-            const table = document.getElementById('matrixTable');
-            const thead = table.querySelector('thead tr');
-            const tbody = table.querySelector('tbody');
-            
-            // Очищаем таблицу
-            thead.innerHTML = '<th>Игрок \\ Игрок</th>';
-            tbody.innerHTML = '';
-            
-            // Сортируем игроков по имени
-            const sortedPlayers = [...players].sort((a, b) => a.name.localeCompare(b.name));
-            
-            // Заголовки столбцов
-            sortedPlayers.forEach(player => {
-                thead.innerHTML += `<th>${player.name}</th>`;
-            });
-            
-            // Заполняем таблицу
-            sortedPlayers.forEach(player1 => {
-                const row = document.createElement('tr');
-                row.innerHTML = `<td>${player1.name}</td>`;
-                
-                sortedPlayers.forEach(player2 => {
-                    if (player1.id === player2.id) {
-                        row.innerHTML += '<td class="cell-empty">—</td>';
-                    } else {
-                        // Ищем матчи между этими игроками
-                        const matches = history.filter(match => 
-                            (match.player1Id === player1.id && match.player2Id === player2.id) ||
-                            (match.player1Id === player2.id && match.player2Id === player1.id)
-                        );
-                        
-                        if (matches.length === 0) {
-                            row.innerHTML += '<td class="cell-empty"></td>';
+                // Создаем элементы формы
+                const formIndicators = playerHistory.map(entry => {
+                    const isPlayer1 = entry.player1Id === player.id;
+                    let resultClass, resultText, opponent;
+                    
+                    if (entry.resultValue === 0) {
+                        // Ничья
+                        resultClass = 'draw';
+                        resultText = 'Ничья';
+                        opponent = isPlayer1 ? entry.player2 : entry.player1;
+                    } else if (isPlayer1) {
+                        if (entry.resultValue === 1) {
+                            // Победа
+                            resultClass = 'win';
+                            resultText = 'Победа';
+                            opponent = entry.player2;
                         } else {
-                            const lastMatch = matches[matches.length - 1];
-                            let resultClass = '';
-                            let resultSymbol = '';
-                            
-                            if (lastMatch.player1Id === player1.id) {
-                                // player1 был первым в паре
-                                if (lastMatch.resultValue === 1) {
-                                    resultClass = 'cell-win';
-                                    resultSymbol = 'В';
-                                } else if (lastMatch.resultValue === 0) {
-                                    resultClass = 'cell-draw';
-                                    resultSymbol = 'Н';
-                                } else {
-                                    resultClass = 'cell-loss';
-                                    resultSymbol = 'П';
-                                }
-                            } else {
-                                // player1 был вторым в паре
-                                if (lastMatch.resultValue === 2) {
-                                    resultClass = 'cell-win';
-                                    resultSymbol = 'В';
-                                } else if (lastMatch.resultValue === 0) {
-                                    resultClass = 'cell-draw';
-                                    resultSymbol = 'Н';
-                                } else {
-                                    resultClass = 'cell-loss';
-                                    resultSymbol = 'П';
-                                }
-                            }
-                            
-                            row.innerHTML += `<td class="${resultClass}" title="${player1.name} vs ${player2.name} (${lastMatch.timestamp})">${resultSymbol}</td>`;
+                            // Поражение
+                            resultClass = 'loss';
+                            resultText = 'Поражение';
+                            opponent = entry.player2;
+                        }
+                    } else {
+                        if (entry.resultValue === 2) {
+                            // Победа
+                            resultClass = 'win';
+                            resultText = 'Победа';
+                            opponent = entry.player1;
+                        } else {
+                            // Поражение
+                            resultClass = 'loss';
+                            resultText = 'Поражение';
+                            opponent = entry.player1;
                         }
                     }
-                });
+                    
+                    return `
+                        <div class="form-indicator ${resultClass}">
+                            ${entry.resultValue === 0 ? 'Н' : (resultClass === 'win' ? 'В' : 'П')}
+                            <div class="form-tooltip">
+                                ${opponent}: ${resultText}<br>
+                                ${entry.timestamp}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
                 
-                tbody.appendChild(row);
-            });
+                return `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${player.name}</td>
+                        <td>${player.wins}</td>
+                        <td>${player.draws}</td>
+                        <td>${player.losses}</td>
+                        <td>${player.points}</td>
+                        <td>
+                            <div class="form-container">
+                                ${playerHistory.length > 0 ? formIndicators : 'Нет данных'}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
-        
-        // В функции loadData добавляем загрузку фактов
-        db.ref('interestingFacts').on('value', snapshot => {
-            const factsData = snapshot.val();
-            if (factsData) {
-                interestingFacts = Object.values(factsData).sort((a, b) => 
-                    new Date(b.timestamp) - new Date(a.timestamp));
-                updateFactsDisplay();
-            }
-        });
-        
-        // В функции switchTab добавляем обработку новых вкладок
+
+        // Обновление таблицы истории
+        function updateHistoryTable() {
+            const tbody = document.querySelector('#historyTable tbody');
+            tbody.innerHTML = history.map(entry => `
+                <tr>
+                    <td>${entry.timestamp}</td>
+                    <td>${entry.player1}</td>
+                    <td>${entry.player2}</td>
+                    <td>${entry.result}</td>
+                </tr>
+            `).reverse().join('');
+        }
+
+        // Обновление списка игроков для статистики
+        function updatePlayerSelect() {
+            const select = document.getElementById('playerSelect');
+            select.innerHTML = '<option value="">Выберите игрока</option>' + 
+                players.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+        }
+
+        // Показать статистику игрока
+        function showPlayerStats() {
+            const playerId = parseInt(document.getElementById('playerSelect').value);
+            if (!playerId) return;
+
+            const player = players.find(p => p.id === playerId);
+            if (!player) return;
+
+            document.getElementById('selectedPlayerName').textContent = player.name;
+
+            const playerHistory = history.filter(entry => 
+                entry.player1Id === playerId || entry.player2Id === playerId
+            );
+
+            const tbody = document.getElementById('playerStatsBody');
+            tbody.innerHTML = playerHistory.map(entry => {
+                const isPlayer1 = entry.player1Id === playerId;
+                const opponent = isPlayer1 ? entry.player2 : entry.player1;
+                let result, points;
+                
+                if (entry.resultValue === 0) {
+                    result = "Ничья";
+                    points = 1;
+                } else if (isPlayer1) {
+                    result = entry.resultValue === 1 ? "Победа" : "Поражение";
+                    points = entry.resultValue === 1 ? 3 : 0;
+                } else {
+                    result = entry.resultValue === 2 ? "Победа" : "Поражение";
+                    points = entry.resultValue === 2 ? 3 : 0;
+                }
+
+                return `
+                    <tr>
+                        <td>${opponent}</td>
+                        <td>${result}</td>
+                        <td>${points}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Переключение вкладок
         function switchTab(tabId) {
-            // ... (предыдущий код)
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
             
-            if (tabId === 'matrix') {
-                buildMatrixTable();
-            } else if (tabId === 'facts') {
-                updateFactsDisplay();
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            document.getElementById(tabId).classList.add('active');
+            
+            document.querySelectorAll('.tab').forEach(tab => {
+                if (tab.getAttribute('onclick').includes(tabId)) {
+                    tab.classList.add('active');
+                }
+            });
+
+            if (tabId === 'stats') {
+                updatePlayerSelect();
+            } else if (tabId === 'results') {
+                updateResults();
             }
         }
-        
-        // В функции vote и draw добавляем обновление статистики
-        function vote(result) {
-            // ... (предыдущий код)
-            
-            // После сохранения в Firebase:
-            updatePlayerStatsAfterMatch(historyEntry);
-            buildMatrixTable(); // Обновляем матрицу
-        }
-        
-        function draw() {
-            // ... (предыдущий код)
-            
-            // После сохранения в Firebase:
-            updatePlayerStatsAfterMatch(historyEntry);
-            buildMatrixTable(); // Обновляем матрицу
-        }
-        
-        // При загрузке данных инициализируем статистику
-        db.ref('players').once('value').then(snapshot => {
-            // ... (предыдущий код)
-            
-            initializePlayerStats();
-            buildMatrixTable();
-        });
+
+        // Запуск при загрузке страницы
+        window.onload = () => {
+            console.log('Страница загружена');
+            loadData();
+        };
     </script>
 </body>
 </html>
