@@ -479,6 +479,11 @@
     </div>
 
     <script>
+        // Запуск при загрузке страницы
+        window.onload = () => {
+            console.log('Страница загружена');
+            loadData();
+        };
         // Конфигурация Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAd2i30miJYAXo0_TreJaBRM2UCiY4B8ds",
