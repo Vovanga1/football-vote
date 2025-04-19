@@ -198,67 +198,6 @@
             justify-content: center;
         }
         
-        /* Стили для шахматной таблицы */
-        .matrix-container {
-            overflow: auto;
-            max-height: 80vh;
-            margin-top: 20px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        
-        #matrixTable {
-            border-collapse: collapse;
-            font-size: 14px;
-            min-width: 100%;
-        }
-        
-        #matrixTable th, #matrixTable td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: center;
-            min-width: 40px;
-            height: 40px;
-        }
-        
-        #matrixTable th {
-            position: sticky;
-            top: 0;
-            background: #006400;
-            color: white;
-            z-index: 10;
-        }
-        
-        #matrixTable th:first-child {
-            left: 0;
-            z-index: 20;
-        }
-        
-        #matrixTable td:first-child {
-            position: sticky;
-            left: 0;
-            background: white;
-            font-weight: bold;
-            z-index: 5;
-        }
-        
-        .cell-win {
-            background-color: #4CAF50;
-            color: white;
-        }
-        
-        .cell-draw {
-            background-color: #FFC107;
-        }
-        
-        .cell-loss {
-            background-color: #F44336;
-            color: white;
-        }
-        
-        .cell-empty {
-            background-color: #f9f9f9;
-        }
         
         /* Стили для вкладки интересных фактов */
         .facts-container {
@@ -367,7 +306,6 @@
     <div class="tabs">
         <div class="tab active" onclick="switchTab('voting')">Голосование</div>
         <div class="tab" onclick="switchTab('results')">Результаты</div>
-        <div class="tab" onclick="switchTab('matrix')">Матрица встреч</div>
         <div class="tab" onclick="switchTab('facts')">Интересные факты</div>
         <div class="tab" onclick="switchTab('history')">История</div>
         <div class="tab" onclick="switchTab('stats')">Статистика</div>
@@ -415,21 +353,6 @@
     </div>
 
     <!-- Вкладка матрицы встреч -->
-    <div id="matrix" class="tab-content">
-        <h2>Матрица встреч</h2>
-        <p>Показаны результаты последних встреч между игроками</p>
-        <div class="matrix-container">
-            <table id="matrixTable">
-                <thead>
-                    <tr>
-                        <th>Игрок \ Игрок</th>
-                        <!-- Заголовки будут заполнены скриптом -->
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
-    </div>
 
     <!-- Вкладка интересных фактов -->
     <div id="facts" class="tab-content">
@@ -507,8 +430,6 @@
                 updatePlayerSelect();
             } else if (tabId === 'results') {
                 updateResults();
-            } else if (tabId === 'matrix') {
-                buildMatrixTable();
             } else if (tabId === 'facts') {
                 updateFactsDisplay();
             }
@@ -706,7 +627,6 @@
                 initializePlayerStats();
                 updateResults();
                 getRandomPair();
-                buildMatrixTable();
             }).catch(error => {
                 console.error('Ошибка загрузки:', error);
             });
@@ -717,7 +637,6 @@
                 updateHistoryTable();
                 updatePlayerSelect();
                 updateResults();
-                buildMatrixTable();
             });
 
             // Загрузка интересных фактов
@@ -933,77 +852,6 @@
             });
         }
 
-        // Построение матрицы встреч
-        function buildMatrixTable() {
-            const table = document.getElementById('matrixTable');
-            const thead = table.querySelector('thead tr');
-            const tbody = table.querySelector('tbody');
-            
-            thead.innerHTML = '<th>Игрок \\ Игрок</th>';
-            tbody.innerHTML = '';
-            
-            // Сортируем игроков по очкам (от большего к меньшему)
-            const sortedPlayers = [...players].sort((a, b) => b.points - a.points);
-            
-            // Добавляем заголовки с именами игроков
-            sortedPlayers.forEach(player => {
-                thead.innerHTML += `<th title="${player.name}">${player.name.split(' ')[1] || player.name}</th>`;
-            });
-            
-            // Заполняем строки матрицы
-            sortedPlayers.forEach(player1 => {
-                const row = document.createElement('tr');
-                row.innerHTML = `<td title="${player1.name}">${player1.name.split(' ')[1] || player1.name}</td>`;
-                
-                sortedPlayers.forEach(player2 => {
-                    if (player1.id === player2.id) {
-                        row.innerHTML += '<td class="cell-empty">—</td>';
-                    } else {
-                        const matches = history.filter(match => 
-                            (match.player1Id === player1.id && match.player2Id === player2.id) ||
-                            (match.player1Id === player2.id && match.player2Id === player1.id)
-                        );
-                        
-                        if (matches.length === 0) {
-                            row.innerHTML += '<td class="cell-empty"></td>';
-                        } else {
-                            const lastMatch = matches[matches.length - 1];
-                            let resultClass = '';
-                            let resultSymbol = '';
-                            
-                            if (lastMatch.player1Id === player1.id) {
-                                if (lastMatch.resultValue === 1) {
-                                    resultClass = 'cell-win';
-                                    resultSymbol = 'В';
-                                } else if (lastMatch.resultValue === 0) {
-                                    resultClass = 'cell-draw';
-                                    resultSymbol = 'Н';
-                                } else {
-                                    resultClass = 'cell-loss';
-                                    resultSymbol = 'П';
-                                }
-                            } else {
-                                if (lastMatch.resultValue === 2) {
-                                    resultClass = 'cell-win';
-                                    resultSymbol = 'В';
-                                } else if (lastMatch.resultValue === 0) {
-                                    resultClass = 'cell-draw';
-                                    resultSymbol = 'Н';
-                                } else {
-                                    resultClass = 'cell-loss';
-                                    resultSymbol = 'П';
-                                }
-                            }
-                            
-                            row.innerHTML += `<td class="${resultClass}" title="${player1.name} vs ${player2.name} (${lastMatch.timestamp})">${resultSymbol}</td>`;
-                        }
-                    }
-                });
-                
-                tbody.appendChild(row);
-            });
-        }
-
         // Голосование
         function vote(result) {
             if (!currentPair) return getRandomPair();
@@ -1044,7 +892,6 @@
                     updatePlayerStatsAfterMatch(historyEntry);
                     updateResults();
                     getRandomPair();
-                    buildMatrixTable();
                 })
                 .catch(error => {
                     console.error('Ошибка сохранения:', error);
@@ -1087,7 +934,6 @@
                     updatePlayerStatsAfterMatch(historyEntry);
                     updateResults();
                     getRandomPair();
-                    buildMatrixTable();
                 })
                 .catch(error => {
                     console.error('Ошибка сохранения:', error);
