@@ -223,6 +223,66 @@
         .stats-container {
             margin-top: 20px;
         }
+        
+        /* Новые стили для топ-10 и антитопа */
+        .top-players-container {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+        .top-players, .bottom-players {
+            width: 48%;
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .top-players h2, .bottom-players h2 {
+            color: #006400;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .player-card {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .player-card img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 50%;
+            margin-right: 15px;
+        }
+        .player-info {
+            flex-grow: 1;
+        }
+        .player-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .player-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #666;
+        }
+        .player-points {
+            font-weight: bold;
+            color: #006400;
+            font-size: 16px;
+            min-width: 40px;
+            text-align: right;
+        }
+        .top-player .player-points {
+            color: #4CAF50;
+        }
+        .bottom-player .player-points {
+            color: #F44336;
+        }
     </style>
 </head>
 <body>
@@ -259,7 +319,18 @@
 
     <!-- Вкладка результатов -->
     <div id="results" class="tab-content">
-        <h2>Таблица результатов</h2>
+        <div class="top-players-container">
+            <div class="top-players">
+                <h2>Топ-10 игроков</h2>
+                <div id="topPlayersList"></div>
+            </div>
+            <div class="bottom-players">
+                <h2>Антитоп (91-100 места)</h2>
+                <div id="bottomPlayersList"></div>
+            </div>
+        </div>
+        
+        <h2>Полная таблица результатов</h2>
         <table id="resultsTable">
             <thead>
                 <tr>
@@ -407,6 +478,7 @@
                 }
             }).then(() => {
                 updateResults();
+                updateTopPlayers();
                 getRandomPair();
             }).catch(error => {
                 console.error('Ошибка загрузки:', error);
@@ -417,7 +489,55 @@
                 history = snapshot.val() ? Object.values(snapshot.val()) : [];
                 updateHistoryTable();
                 updatePlayerSelect();
-                updateResults(); // Обновляем результаты, так как история изменилась
+                updateResults();
+                updateTopPlayers();
+            });
+        }
+
+        // Обновление топ-10 и антитопа
+        function updateTopPlayers() {
+            const sortedPlayers = [...players].sort((a, b) => b.points - a.points);
+            
+            // Топ-10 игроков
+            const topPlayers = sortedPlayers.slice(0, 10);
+            const topPlayersList = document.getElementById('topPlayersList');
+            topPlayersList.innerHTML = '';
+            
+            topPlayers.forEach((player, index) => {
+                const playerCard = document.createElement('div');
+                playerCard.className = 'player-card top-player';
+                playerCard.innerHTML = `
+                    <img src="${player.img}" onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" fill=\"%23f0f0f0\"%3E%3Crect width=\"60\" height=\"60\" rx=\"30\" /%3E%3Ctext x=\"50%\" y=\"50%\" font-family=\"Arial\" font-size=\"20\" text-anchor=\"middle\" dy=\".3em\" fill=\"%23888\"%3E${index + 1}%3C/text%3E%3C/svg%3E'">
+                    <div class="player-info">
+                        <div class="player-name">${index + 1}. ${player.name}</div>
+                        <div class="player-stats">
+                            <span>${player.wins}В ${player.draws}Н ${player.losses}П</span>
+                        </div>
+                    </div>
+                    <div class="player-points">${player.points}</div>
+                `;
+                topPlayersList.appendChild(playerCard);
+            });
+            
+            // Антитоп (91-100 места)
+            const bottomPlayers = sortedPlayers.slice(90, 100);
+            const bottomPlayersList = document.getElementById('bottomPlayersList');
+            bottomPlayersList.innerHTML = '';
+            
+            bottomPlayers.forEach((player, index) => {
+                const playerCard = document.createElement('div');
+                playerCard.className = 'player-card bottom-player';
+                playerCard.innerHTML = `
+                    <img src="${player.img}" onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" fill=\"%23f0f0f0\"%3E%3Crect width=\"60\" height=\"60\" rx=\"30\" /%3E%3Ctext x=\"50%\" y=\"50%\" font-family=\"Arial\" font-size=\"20\" text-anchor=\"middle\" dy=\".3em\" fill=\"%23888\"%3E${index + 91}%3C/text%3E%3C/svg%3E'">
+                    <div class="player-info">
+                        <div class="player-name">${index + 91}. ${player.name}</div>
+                        <div class="player-stats">
+                            <span>${player.wins}В ${player.draws}Н ${player.losses}П</span>
+                        </div>
+                    </div>
+                    <div class="player-points">${player.points}</div>
+                `;
+                bottomPlayersList.appendChild(playerCard);
             });
         }
 
@@ -471,6 +591,7 @@
                 .then(() => db.ref('history').push(historyEntry))
                 .then(() => {
                     updateResults();
+                    updateTopPlayers();
                     getRandomPair();
                 })
                 .catch(error => {
@@ -521,6 +642,7 @@
                 .then(() => db.ref('history').push(historyEntry))
                 .then(() => {
                     updateResults();
+                    updateTopPlayers();
                     getRandomPair();
                 })
                 .catch(error => {
@@ -755,6 +877,7 @@
                 updatePlayerSelect();
             } else if (tabId === 'results') {
                 updateResults();
+                updateTopPlayers();
             }
         }
 
